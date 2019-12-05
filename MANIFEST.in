@@ -1,0 +1,4 @@
+include README.md
+recursive-include octoprint_prometheus_exporter/templates *
+recursive-include octoprint_prometheus_exporter/translations *
+recursive-include octoprint_prometheus_exporter/static *
