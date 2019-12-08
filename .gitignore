@@ -7,3 +7,7 @@ dist
 *.egg*
 .DS_Store
 *.zip
+docker/prometheus_data/*
+docker/grafana_data/*
+docker/octoprint_data/*
+

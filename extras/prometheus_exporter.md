@@ -35,5 +35,25 @@ Currently exported metrics:
  - octoprint version, hostname, os - as info
  - actual temperature - as gauge with tool identifier label
  - target temperature - as gauge with tool identifier label
+ - client number - as gauge; the actually connected clients to the host
+ - printer state - as info
+ - started prints - as counter
+ - failed prints - as counter
+ - done prints - as counter
+ - cancelled prints - as counter
+ - timelaps count - as counter
+ - print progress - as gauge with path label
+ - slice progress - as gauge with path label
+ 
+All of the metrics are prefixed as `octoprint_` for easier identification. 
  
 The metrics endpoint is: http://localhost:5000/plugin/prometheus_exporter/metrics (change the host+port to your actual host+port)
+
+Example scrape config (or check it from the project repo):
+```
+- job_name: 'octoprint'
+    scrape_interval: 5s
+    metrics_path: '/plugin/prometheus_exporter/metrics'
+    static_configs:
+      - targets: ['octoprint:80']
+```
