@@ -1,14 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-### (Don't forget to remove me)
-# This is a basic skeleton for your plugin's __init__.py. You probably want to adjust the class name of your plugin
-# as well as the plugin mixins it's subclassing from. This is really just a basic skeleton to get you started,
-# defining your plugin as a template plugin, settings and asset plugin. Feel free to add or remove mixins
-# as necessary.
-#
-# Take a look at the documentation on what other plugin mixins are available.
-
 import octoprint.plugin
 from octoprint.util.version import get_octoprint_version_string
 from prometheus_client import make_wsgi_app
@@ -22,8 +14,8 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 							   octoprint.plugin.EventHandlerPlugin):
 
 	# TEMP
-	temps_actual = Gauge('temperatures_actual', 'Reported temperatures', ['identifier'])
-	temps_target = Gauge('temperatures_target', 'Targeted temperatures', ['identifier'])
+	temps_actual = Gauge('octoprint_temperatures_actual', 'Reported temperatures', ['identifier'])
+	temps_target = Gauge('octoprint_temperatures_target', 'Targeted temperatures', ['identifier'])
 
 	def get_temp_update(self, comm, parsed_temps):
 		for k, v in parsed_temps.items():
@@ -50,7 +42,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		pass
 
 	# CLIENT NUM
-	client_num = Gauge('client_num', 'The number of connected clients')
+	client_num = Gauge('octoprint_client_num', 'The number of connected clients')
 
 	def clientnum_inc(self):
 		self.client_num.inc()
@@ -58,25 +50,25 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.client_num.dec()
 
 	# PRINTER STATE
-	printer_state = Info('printer_state', 'Printer connection info')
+	printer_state = Info('octoprint_printer_state', 'Printer connection info')
 
 	def set_printer_info(self, payload):
 		self.printer_state.info(payload)
 
 	# PRINTING
-	started_print_counter = Counter('started_prints', 'Started print jobs')
-	failed_print_counter = Counter('failed_prints', 'Failed print jobs')
-	done_print_counter = Counter('done_prints', 'Done print jobs')
-	cancelled_print_counter = Counter('cancelled_prints', 'Cancelled print jobs')
+	started_print_counter = Counter('octoprint_started_prints', 'Started print jobs')
+	failed_print_counter = Counter('octoprint_failed_prints', 'Failed print jobs')
+	done_print_counter = Counter('octoprint_done_prints', 'Done print jobs')
+	cancelled_print_counter = Counter('octoprint_cancelled_prints', 'Cancelled print jobs')
 
 	# TIMELAPSE
-	timelapse_counter = Counter('captured_timelapses', 'Timelapse captured')
+	timelapse_counter = Counter('octoprint_captured_timelapses', 'Timelapse captured')
 
 	# PRINT PROGRESS
-	print_progress = Gauge('print_progress', 'Print progress', ['path'])
+	print_progress = Gauge('octoprint_print_progress', 'Print progress', ['path'])
 
 	# SLICE PROGRESS
-	slice_progress = Gauge('slice_progress', 'Slice progress', ['path'])
+	slice_progress = Gauge('octoprint_slice_progress', 'Slice progress', ['path'])
 
 	##~~ EventHandlerPlugin mixin
 	def on_event(self, event, payload):
