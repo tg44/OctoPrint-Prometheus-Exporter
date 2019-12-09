@@ -24,7 +24,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 					self.temps_actual.labels(k).set(v[0])
 				if not v[1] is None:
 					self.temps_target.labels(k).set(v[1])
-		pass
+		return parsed_temps
 
 	# INFO
 	octoprint_info = Info('octoprint_infos', 'Octoprint host informations')
