@@ -2,12 +2,12 @@
 layout: plugin
 
 id: prometheus_exporter
-title: OctoPrint-Prometheus-Exporter
+title: Prometheus Exporter
 description: A plugin for prometheus compatible metrics endpoint
 author: Gergo Torcsvari
 license: MIT
 
-date: 2019-12-05
+date: 2019-12-09
 
 homepage: https://github.com/tg44/OctoPrint-Prometheus-Exporter
 source: https://github.com/tg44/OctoPrint-Prometheus-Exporter
@@ -54,6 +54,17 @@ Example scrape config (or check it from the project repo):
 - job_name: 'octoprint'
     scrape_interval: 5s
     metrics_path: '/plugin/prometheus_exporter/metrics'
+    static_configs:
+      - targets: ['octoprint:80']
+```
+
+If you have authentication enabled use this version:
+```
+ - job_name: 'octoprint'
+    scrape_interval: 5s
+    metrics_path: '/plugin/prometheus_exporter/metrics'
+    params:
+      apikey: ['__OCTOPRINT_APIKEY__']
     static_configs:
       - targets: ['octoprint:80']
 ```

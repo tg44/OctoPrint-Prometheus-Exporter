@@ -6,11 +6,22 @@ Later on, you can use data vizualisation tools (for example [grafana](https://gr
 This plugin has no visible UI!
 
 Currently exported metrics:
- - python version - as info
- - octoprint version, hostname, os - as info
- - actual temperature - as gauge with tool identifier label
- - target temperature - as gauge with tool identifier label
- 
+  - python version - as info
+  - octoprint version, hostname, os - as info
+  - actual temperature - as gauge with tool identifier label
+  - target temperature - as gauge with tool identifier label
+  - client number - as gauge; the actually connected clients to the host
+  - printer state - as info
+  - started prints - as counter
+  - failed prints - as counter
+  - done prints - as counter
+  - cancelled prints - as counter
+  - timelaps count - as counter
+  - print progress - as gauge with path label
+  - slice progress - as gauge with path label
+
+All of the metrics are prefixed as `octoprint_` for easier identification. 
+
 The metrics endpoint is: http://localhost:5000/plugin/prometheus_exporter/metrics (change the host+port to your actual host+port)
 
 ## Setup
@@ -19,8 +30,30 @@ Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wik
 or manually using this URL:
 
     https://github.com/tg44/OctoPrint-Prometheus-Exporter/archive/master.zip
-    
-You can also get the general prometheus configuration idea from the docker-compose file and the `docker/prometheus/prometheus.yml` file.
+
+## Prometheus config
+
+Add this to the `scrape_configs` part of your `prometheus.yml`:
+
+```
+- job_name: 'octoprint'
+    scrape_interval: 5s
+    metrics_path: '/plugin/prometheus_exporter/metrics'
+    static_configs:
+      - targets: ['octoprint:80']
+```
+
+Or if you have enabled authentication:
+
+```
+ - job_name: 'octoprint'
+    scrape_interval: 5s
+    metrics_path: '/plugin/prometheus_exporter/metrics'
+    params:
+      apikey: ['__OCTOPRINT_APIKEY__']
+    static_configs:
+      - targets: ['octoprint:80']
+```
 
 ## Local developement/testing
 
