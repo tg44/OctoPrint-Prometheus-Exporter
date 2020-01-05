@@ -1,17 +1,31 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+import os
 import octoprint.plugin
 from octoprint.util.version import get_octoprint_version_string
+from octoprint.util import RepeatedTimer
 from prometheus_client import make_wsgi_app
 from prometheus_client import Gauge
 from prometheus_client import Info
 from prometheus_client import Counter
 
+
 class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 							   octoprint.plugin.StartupPlugin,
 							   octoprint.plugin.ProgressPlugin,
 							   octoprint.plugin.EventHandlerPlugin):
+
+	def initialize(self):
+		# if the following returns None it makes no sense to create the
+		# timer and fail every second
+		if self.get_raspberry_core_temperature() is not None:
+			self.timer = RepeatedTimer(1.0, self.report_raspberry_core_temperature)
+			self.timer.start()
+		else:
+			self._logger.error('Failed to execute "sudo /usr/bin/vcgencmd"')
+			self._logger.error('Raspberry core temperature will not be reported')
+
 
 	# TEMP
 	temps_actual = Gauge('octoprint_temperatures_actual', 'Reported temperatures', ['identifier'])
@@ -25,6 +39,25 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 				if not v[1] is None:
 					self.temps_target.labels(k).set(v[1])
 		return parsed_temps
+
+	raspberry_core_temp = Gauge('octoprint_raspberry_core_temperature', 'Core temperature of Raspberry Pi')
+	def report_raspberry_core_temperature(self):
+		temp = self.get_raspberry_core_temperature()
+		if temp is not None:
+			self.raspberry_core_temp.set(temp)
+
+	def get_raspberry_core_temperature(self):
+		# You need to add pi users to sudoers so it can execute the vcgencmd command
+		#
+		# root@octopi:/etc/sudoers.d# cat /etc/sudoers.d/octoprint-vcgencmd
+		# pi ALL=NOPASSWD: /usr/bin/vcgencmd
+		# root@octopi:/etc/sudoers.d#
+		temp = os.popen('sudo /usr/bin/vcgencmd measure_temp').readline()
+		if not temp.startswith('temp='):
+			return None
+		temp = temp.replace('temp=','').replace("'C",'')
+		return float(temp)
+
 
 	# INFO
 	octoprint_info = Info('octoprint_infos', 'Octoprint host informations')
