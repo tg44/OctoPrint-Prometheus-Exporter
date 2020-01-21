@@ -27,9 +27,8 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self._logger.error('Failed to execute "sudo /usr/bin/vcgencmd"')
 			self._logger.error('Raspberry core temperature will not be reported')
 		self.parser = Gcode_parser()
-        self.movements = {}  # holds movements gauges
-        self.last_extrusion_counter = 0
-        self.print_completion_timer = None
+		self.last_extrusion_counter = 0
+		self.print_completion_timer = None
 
 
 	# TEMP
@@ -108,12 +107,8 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	# SLICE PROGRESS
 	slice_progress = Gauge('octoprint_slice_progress', 'Slice progress', ['path'])
 
-	# MOVEMENTS
-	self.movements['movement_x'] = Gauge('octoprint_movement_x', 'Movement of X axis from G0 or G1 gcode')
-	self.movements['movement_y'] = Gauge('octoprint_movement_y', 'Movement of Y axis from G0 or G1 gcode')
-	self.movements['movement_z'] = Gauge('octoprint_movement_z', 'Movement of Z axis from G0 or G1 gcode')
-	self.movements['movement_e'] = Gauge('octoprint_movement_e', 'Movement of Extruder from G0 or G1 gcode')
-	self.movements['movement_speed'] = Gauge('octoprint_movement_speed', 'Speed setting from G0 or G1 gcode')
+	# MOVEMENT
+	movement = Gauge('octoprint_movement', 'Movement of axis from G0 or G1 gcode', ['identifier'])
 
 	# Extrusion 
 	extrusion_total = Counter('octoprint_extrusion_total', 'Filament extruded total')
@@ -122,20 +117,19 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	# Fan speed
 	print_fan_speed = Gauge('octoprint_print_fan_speed', 'Fan speed')
 	
-
 	def print_complete_callback(self):
-        self.get_gauge("extrusion_print").set(0)
-        self.print_completion_timer = None
+		self.extrusion_print.set(0)
+		self.print_completion_timer = None
 
-    def print_complete:
-        # In 30 seconds, reset all the progress variables back to 0
-        # At a default 10 second interval, this gives us plenty of room for Prometheus to capture the 100%
-        # complete gauge.
+	def print_complete(self):
+		# In 30 seconds, reset all the progress variables back to 0
+		# At a default 10 second interval, this gives us plenty of room for Prometheus to capture the 100%
+		# complete gauge.
 
-        # TODO: Is this really a good idea?
+		# TODO: Is this really a good idea?
 
-        self.print_completion_timer = Timer(30, self.print_complete_callback)
-        self.print_completion_timer.start()
+		self.print_completion_timer = Timer(30, self.print_complete_callback)
+		self.print_completion_timer.start()
 
 	##~~ EventHandlerPlugin mixin
 	def on_event(self, event, payload):
@@ -148,12 +142,12 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		if event == 'PrintStarted':
 			self.started_print_counter.inc()
 			# If there's a completion timer running, kill it.
-            if self.print_completion_timer:
-                self.print_completion_timer.cancel()
-                self.print_completion_timer = None
-            # reset the extrusion counter
-            self.parser.reset()
-            self.last_extrusion_counter = 0
+			if self.print_completion_timer:
+				self.print_completion_timer.cancel()
+				self.print_completion_timer = None
+			# reset the extrusion counter
+			self.parser.reset()
+			self.last_extrusion_counter = 0
 		if event == 'PrintFailed':
 			self.failed_print_counter.inc()
 			self.print_complete
@@ -167,34 +161,29 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.timelapse_counter.inc()
 		pass
 
-
-	def get_movement(self, name):
-        return self.movements[name]	
-
 	def gcodephase_hook(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
-        if phase == "sent":
-            parse_result = self.parser.process_line(cmd)
-            if parse_result == "movement":
-                for k in ["x", "y", "z", "e", "speed"]:
-                    v = getattr(self.parser, k)
-                    if v is not None:
-                        movement = self.get_movement("movement_" + k)
-                        movement.set(v)
+		if phase == "sent":
+			parse_result = self.parser.process_line(cmd)
+			if parse_result == "movement":
+				for k in ["x", "y", "z", "e", "speed"]:
+					v = getattr(self.parser, k)
+					if v is not None:
+						self.movement.labels(k).set(v)
 
-                # extrusion_print is modeled as a gauge so we can reset it after every print
-                self.extrusion_print.set(self.parser.extrusion_counter)
+				# extrusion_print is modeled as a gauge so we can reset it after every print
+				self.extrusion_print.set(self.parser.extrusion_counter)
 
-                if self.parser.extrusion_counter > self.last_extrusion_counter:
-                    # extrusion_total is monotonically increasing for the lifetime of the plugin
-                    self.extrusion_total.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
-                    self.last_extrusion_counter = self.parser.extrusion_counter
+				if self.parser.extrusion_counter > self.last_extrusion_counter:
+					# extrusion_total is monotonically increasing for the lifetime of the plugin
+					self.extrusion_total.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
+					self.last_extrusion_counter = self.parser.extrusion_counter
 
-            elif parse_result == "print_fan_speed":
-                v = getattr(self.parser, "print_fan_speed")
-                if v is not None:
-                    self.print_fan_speed.set(v)
+			elif parse_result == "print_fan_speed":
+				v = getattr(self.parser, "print_fan_speed")
+				if v is not None:
+					self.print_fan_speed.set(v)
 
-        return None  # no change
+		return None  # no change
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
@@ -240,6 +229,5 @@ def __plugin_load__():
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
 		"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_temp_update,
-		"octoprint.comm.protocol.gcode.sent": plugin.gcodephase_hook
+		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.gcodephase_hook
 	}
-
