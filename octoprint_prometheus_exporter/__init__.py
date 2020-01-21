@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+from threading import Timer
 import os
 import octoprint.plugin
 from octoprint.util.version import get_octoprint_version_string
