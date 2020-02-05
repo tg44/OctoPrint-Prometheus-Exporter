@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 from threading import Timer
+import time
 import os
 import octoprint.plugin
 from octoprint.util.version import get_octoprint_version_string
@@ -29,6 +30,8 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.parser = Gcode_parser()
 		self.last_extrusion_counter = 0
 		self.print_completion_timer = None
+		self.print_time_start = 0
+		self.print_time_end = 0
 
 
 	# TEMP
@@ -107,21 +110,16 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	# SLICE PROGRESS
 	slice_progress = Gauge('octoprint_slice_progress', 'Slice progress', ['path'])
 
-	# MOVEMENT
-	movement = Gauge('octoprint_movement', 'Movement of axis from G0 or G1 gcode', ['identifier'])
+	# TOTAL PRINTING TIME 
+	printing_time_total = Counter('octoprint_printing_time_total', 'Printing time total')
 
-	# Extrusion 
-	extrusion_total = Counter('octoprint_extrusion_total', 'Filament extruded total')
-	extrusion_print = Gauge('octoprint_extrusion_print', 'Filament extruded this print')
-
-	# Fan speed
-	print_fan_speed = Gauge('octoprint_print_fan_speed', 'Fan speed')
-	
 	def print_complete_callback(self):
 		self.extrusion_print.set(0)
 		self.print_completion_timer = None
 
 	def print_complete(self):
+		self.printing_time_total.inc(self.print_time_end - self.print_time_start)
+
 		# In 30 seconds, reset all the progress variables back to 0
 		# At a default 10 second interval, this gives us plenty of room for Prometheus to capture the 100%
 		# complete gauge.
@@ -140,6 +138,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		if event == 'PrinterStateChanged':
 			self.set_printer_info(payload)
 		if event == 'PrintStarted':
+			self.print_time_start = time.time()
 			self.started_print_counter.inc()
 			# If there's a completion timer running, kill it.
 			if self.print_completion_timer:
@@ -149,17 +148,30 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.parser.reset()
 			self.last_extrusion_counter = 0
 		if event == 'PrintFailed':
+			self.print_time_end = time.time()
 			self.failed_print_counter.inc()
 			self.print_complete
 		if event == 'PrintDone':
+			self.print_time_end = time.time()
 			self.done_print_counter.inc()
 			self.print_complete
 		if event == 'PrintCancelled':
+			self.print_time_end = time.time()
 			self.cancelled_print_counter.inc()
 			self.print_complete
 		if event == 'CaptureDone':
 			self.timelapse_counter.inc()
 		pass
+
+	# MOVEMENT
+	movement = Gauge('octoprint_movement', 'Movement of axis from G0 or G1 gcode', ['identifier'])
+
+	# EXTRUSION 
+	extrusion_total = Counter('octoprint_extrusion_total', 'Filament extruded total')
+	extrusion_print = Gauge('octoprint_extrusion_print', 'Filament extruded this print')
+
+	# FAN SPEED
+	print_fan_speed = Gauge('octoprint_print_fan_speed', 'Fan speed')
 
 	def gcodephase_hook(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
 		if phase == "sent":
