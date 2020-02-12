@@ -163,9 +163,6 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.timelapse_counter.inc()
 		pass
 
-	# MOVEMENT
-	movement = Gauge('octoprint_movement', 'Movement of axis from G0 or G1 gcode', ['identifier'])
-
 	# EXTRUSION 
 	extrusion_total = Counter('octoprint_extrusion_total', 'Filament extruded total')
 	extrusion_print = Gauge('octoprint_extrusion_print', 'Filament extruded this print')
@@ -177,11 +174,6 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		if phase == "sent":
 			parse_result = self.parser.process_line(cmd)
 			if parse_result == "movement":
-				for k in ["x", "y", "z", "e", "speed"]:
-					v = getattr(self.parser, k)
-					if v is not None:
-						self.movement.labels(k).set(v)
-
 				# extrusion_print is modeled as a gauge so we can reset it after every print
 				self.extrusion_print.set(self.parser.extrusion_counter)
 
