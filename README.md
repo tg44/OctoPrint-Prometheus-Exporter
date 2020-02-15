@@ -19,6 +19,11 @@ Currently exported metrics:
   - timelaps count - as counter
   - print progress - as gauge with path label
   - slice progress - as gauge with path label
+  - print total time - as counter
+  - last print time - as gauge
+  - fan speed - as gauge
+  - extrusion total - as counter
+  - last print extrusion - as gauge
 
 All of the metrics are prefixed as `octoprint_` for easier identification. 
 
