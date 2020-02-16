@@ -29,6 +29,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self._logger.error('Raspberry core temperature will not be reported')
 		self.parser = Gcode_parser()
 		self.last_extrusion_counter = 0
+		self.print_progress_label = ''
 		self.print_completion_timer = None
 		self.print_time_start = 0
 		self.print_time_end = 0
@@ -110,12 +111,18 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	# SLICE PROGRESS
 	slice_progress = Gauge('octoprint_slice_progress', 'Slice progress', ['path'])
 
-	# TOTAL PRINTING TIME 
+	# TOTAL PRINTING TIME
 	printing_time_total = Counter('octoprint_printing_time_total', 'Printing time total')
 
 	def print_complete_callback(self):
 		self.extrusion_print.set(0)
 		self.print_completion_timer = None
+
+	def print_deregister_callback(self, label):
+		self.print_progress.remove(label)
+
+	def slice_deregister_callback(self, label):
+		self.slice_progress.remove(label)
 
 	def print_complete(self):
 		self.printing_time_total.inc(self.print_time_end - self.print_time_start)
@@ -128,6 +135,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 		self.print_completion_timer = Timer(30, self.print_complete_callback)
 		self.print_completion_timer.start()
+		Timer(30, lambda: self.print_deregister_callback(self.print_progress_label)).start()
 
 	##~~ EventHandlerPlugin mixin
 	def on_event(self, event, payload):
@@ -150,20 +158,20 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		if event == 'PrintFailed':
 			self.print_time_end = time.time()
 			self.failed_print_counter.inc()
-			self.print_complete
+			self.print_complete()
 		if event == 'PrintDone':
 			self.print_time_end = time.time()
 			self.done_print_counter.inc()
-			self.print_complete
+			self.print_complete()
 		if event == 'PrintCancelled':
 			self.print_time_end = time.time()
 			self.cancelled_print_counter.inc()
-			self.print_complete
+			self.print_complete()
 		if event == 'CaptureDone':
 			self.timelapse_counter.inc()
 		pass
 
-	# EXTRUSION 
+	# EXTRUSION
 	extrusion_total = Counter('octoprint_extrusion_total', 'Filament extruded total')
 	extrusion_print = Gauge('octoprint_extrusion_print', 'Filament extruded this print')
 
@@ -191,10 +199,13 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
+		self.print_progress_label = path
 		self.print_progress.labels(path).set(progress)
 		pass
 	def	on_slicing_progress(self, slicer, source_location, source_path, destination_location, destination_path, progress):
 		self.slice_progress.labels(source_path).set(progress)
+		if progress >= 100:
+			Timer(30, lambda: self.slice_deregister_callback(source_path)).start()
 		pass
 
 	# ENDPOINT
