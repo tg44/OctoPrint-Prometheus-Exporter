@@ -29,6 +29,9 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self._logger.error('Raspberry core temperature will not be reported')
 		self.parser = Gcode_parser()
 		self.last_extrusion_counter = 0
+		self.last_x_travel = 0
+		self.last_y_travel = 0
+		self.last_z_travel = 0
 		self.print_progress_label = ''
 		self.print_completion_timer = None
 		self.print_time_start = 0
@@ -116,6 +119,9 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 	def print_complete_callback(self):
 		self.extrusion_print.set(0)
+		self.x_travel_print.set(0)
+		self.y_travel_print.set(0)
+		self.z_travel_print.set(0)
 		self.print_completion_timer = None
 
 	def print_deregister_callback(self, label):
@@ -155,6 +161,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			# reset the extrusion counter
 			self.parser.reset()
 			self.last_extrusion_counter = 0
+			self.last_x_travel = 0
 		if event == 'PrintFailed':
 			self.print_time_end = time.time()
 			self.failed_print_counter.inc()
@@ -175,6 +182,18 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	extrusion_total = Counter('octoprint_extrusion_total', 'Filament extruded total')
 	extrusion_print = Gauge('octoprint_extrusion_print', 'Filament extruded this print')
 
+	# X TRAVEL
+	x_travel_total = Counter('octoprint_x_travel_total', 'X axis travel total')
+	x_travel_print = Gauge('octoprint_x_travel_print', 'X axis travel in this print')
+
+	# Y TRAVEL
+	y_travel_total = Counter('octoprint_y_travel_total', 'Y axis travel total')
+	y_travel_print = Gauge('octoprint_y_travel_print', 'Y axis travel in this print')
+
+	# Z TRAVEL
+	z_travel_total = Counter('octoprint_z_travel_total', 'Z axis travel total')
+	z_travel_print = Gauge('octoprint_z_travel_print', 'Z axis travel in this print')
+
 	# FAN SPEED
 	print_fan_speed = Gauge('octoprint_print_fan_speed', 'Fan speed')
 
@@ -190,6 +209,29 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 					self.extrusion_total.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
 					self.last_extrusion_counter = self.parser.extrusion_counter
 
+				# x_travel_print is modeled as a gauge so we can reset it after every print
+				self.x_travel_print.set(self.parser.x_travel)
+
+				if self.parser.x_travel > self.last_x_travel:
+					# x_travel_total is monotonically increasing for the lifetime of the plugin
+					self.x_travel_total.inc(self.parser.x_travel - self.last_x_travel)
+					self.last_x_travel = self.parser.x_travel
+
+				# y_travel_print is modeled as a gauge so we can reset it after every print
+				self.y_travel_print.set(self.parser.y_travel)
+
+				if self.parser.y_travel > self.last_y_travel:
+					# y_travel_total is monotonically increasing for the lifetime of the plugin
+					self.y_travel_total.inc(self.parser.y_travel - self.last_y_travel)
+					self.last_y_travel = self.parser.y_travel
+
+				# z_travel_print is modeled as a gauge so we can reset it after every print
+				self.z_travel_print.set(self.parser.z_travel)
+
+				if self.parser.z_travel > self.last_z_travel:
+					# z_travel_total is monotonically increasing for the lifetime of the plugin
+					self.z_travel_total.inc(self.parser.z_travel - self.last_z_travel)
+					self.last_z_travel = self.parser.z_travel
 			elif parse_result == "print_fan_speed":
 				v = getattr(self.parser, "print_fan_speed")
 				if v is not None:
