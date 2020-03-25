@@ -162,6 +162,8 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.parser.reset()
 			self.last_extrusion_counter = 0
 			self.last_x_travel = 0
+			self.last_y_travel = 0
+			self.last_z_travel = 0
 		if event == 'PrintFailed':
 			self.print_time_end = time.time()
 			self.failed_print_counter.inc()
