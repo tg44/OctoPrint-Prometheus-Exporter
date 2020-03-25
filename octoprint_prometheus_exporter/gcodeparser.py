@@ -23,8 +23,11 @@ class Gcode_parser(object):
     def reset(self):
         self.last_extrusion_move = None
         self.extrusion_counter = 0
+        self.x_travel = 0
         self.x = None
+        self.y_travel = 0
         self.y = None
+        self.z_travel = 0
         self.z = None
         self.e = None
         self.speed = None
@@ -90,6 +93,9 @@ class Gcode_parser(object):
 
         return None
 
+    def process_axis_movement(self, target_position, current_position):
+        return abs(current_position - target_position)
+
     def process_line(self, line):
         movement = self.parse_move_args(line)
         if movement is not None:
@@ -97,12 +103,18 @@ class Gcode_parser(object):
             if e is not None:
                 self.extrusion_counter += e
                 self.e = e
+            if x is not None:
+                if self.x is not None:
+                    self.x_travel += self.process_axis_movement(x, self.x)
+                self.x = x
             if y is not None:
+                if self.y is not None:
+                    self.y_travel += self.process_axis_movement(y, self.y)
                 self.y = y
             if z is not None:
+                if self.z is not None:
+                    self.z_travel += self.process_axis_movement(z, self.z)
                 self.z = z
-            if x is not None:
-                self.x = x
             if speed is not None:
                 self.speed = speed
             return "movement"

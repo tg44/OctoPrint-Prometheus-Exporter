@@ -23,6 +23,7 @@ Currently exported metrics:
   - last print time - as gauge
   - fan speed - as gauge
   - extrusion total - as counter
+  - x, y and z travel - as a counter
   - last print extrusion - as gauge
 
 All of the metrics are prefixed as `octoprint_` for easier identification. 
