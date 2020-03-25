@@ -94,10 +94,7 @@ class Gcode_parser(object):
         return None
 
     def process_axis_movement(self, target_position, current_position):
-        if current_position > target_position:
-            return (current_position - target_position)
-        else:
-            return (target_position - current_position)
+        return abs(current_position - target_position)
 
     def process_line(self, line):
         movement = self.parse_move_args(line)
