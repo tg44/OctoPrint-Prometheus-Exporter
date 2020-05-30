@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import re
 import sys
 
@@ -74,7 +76,7 @@ class Gcode_parser(object):
                 speed = float(m.groups()[0])
 
             return x, y, z, e, speed
-            
+
         return None
 
     def parse_fan_speed(self, line):
@@ -125,17 +127,3 @@ class Gcode_parser(object):
             return "print_fan_speed"
 
         return None
-
-
-if __name__ == "__main__":
-    # a simple self-test: open the first arg on the command line and parse it
-
-    parser = Gcode_parser()
-
-    for line in open(sys.argv[1]).readlines():
-        line = line.strip()
-        parse_result = parser.process_line(line)
-        if parse_result == "movement":
-            print "M %s %s %s" % (parser.x, parser.y, parser.z)
-        elif parse_result == "print_fan_speed":
-            print "FAN %0.2f" % parser.print_fan_speed

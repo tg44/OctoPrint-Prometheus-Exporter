@@ -1,5 +1,5 @@
 # coding=utf-8
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from threading import Timer
 import time
@@ -279,6 +279,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		)
 
 __plugin_name__ = "Prometheus Exporter Plugin"
+__plugin_pythoncompat__ = ">=2.7,<4"
 
 def __plugin_load__():
 	global __plugin_implementation__

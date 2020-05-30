@@ -26,7 +26,7 @@ Currently exported metrics:
   - x, y and z travel - as a counter
   - last print extrusion - as gauge
 
-All of the metrics are prefixed as `octoprint_` for easier identification. 
+All of the metrics are prefixed as `octoprint_` for easier identification.
 
 The metrics endpoint is: http://localhost:5000/plugin/prometheus_exporter/metrics (change the host+port to your actual host+port)
 
@@ -67,11 +67,19 @@ There is a docker-compose file, which will start:
  - an octoprint instance on port 5000
    - !!! you should install the plugin to it
    - TODO: auto load the plugin to the newly created container
-   - !!! you should add [virtual printer](https://docs.octoprint.org/en/master/development/virtual_printer.html#enabling-the-virtual-printer) to it (after the first start docker/octoprint_data/config.yaml and restart the container) 
+   - !!! you should add [virtual printer](https://docs.octoprint.org/en/master/development/virtual_printer.html#enabling-the-virtual-printer) to it (after the first start docker/octoprint_data/config.yaml and restart the container)
+   - without docker:
+     - clone
+     - cd to the dir
+     - virtualenv --python=/usr/bin/python3 venv3
+     - source venv3/bin/activate
+     - pip install "OctoPrint>=1.4.0rc1"
+     - pip install -e .
+     - octoprint serve --debug
  - a prometheus instance on port 9090
    - configured to pull the metrics from the octoprint
  - a grafana instance on port 3000
    - configured prometheus as datasource
    - user/pass is admin/foobar
-   
+
 You can start the stack with a regular `docker-compose up -d`.
