@@ -143,6 +143,17 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.print_completion_timer.start()
 		Timer(30, lambda: self.print_deregister_callback(self.print_progress_label)).start()
 
+	def deactivateMetricsIfOffline(self, payload):
+		if payload['state_id'] == 'OFFLINE':
+			self.print_complete_callback()
+			#not really safe, totally not threadsafe, but I didn't found better alternative
+			try:
+				self.temps_actual._metrics.clear()
+				self.temps_target._metrics.clear()
+			except Exception as err:
+				self._logger.warning(err)
+
+
 	##~~ EventHandlerPlugin mixin
 	def on_event(self, event, payload):
 		if event == 'ClientOpened':
@@ -150,6 +161,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		if event == 'ClientClosed':
 			self.clientnum_dec()
 		if event == 'PrinterStateChanged':
+			self.deactivateMetricsIfOffline(payload)
 			self.set_printer_info(payload)
 		if event == 'PrintStarted':
 			self.print_time_start = time.time()
