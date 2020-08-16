@@ -110,6 +110,9 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 	# PRINT PROGRESS
 	print_progress = Gauge('octoprint_print_progress', 'Print progress', ['path'])
+	print_time_elapsed = Gauge('octoprint_print_time_elapsed', 'Print time elapsed', ['path'])
+	print_time_est = Gauge('octoprint_print_time_est', 'Print time estimate', ['path'])
+	print_time_left_est = Gauge('octoprint_print_time_left_estimate', 'Print time left estimate', ['path'])
 
 	# SLICE PROGRESS
 	slice_progress = Gauge('octoprint_slice_progress', 'Slice progress', ['path'])
@@ -125,7 +128,12 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.print_completion_timer = None
 
 	def print_deregister_callback(self, label):
-		self.print_progress.remove(label)
+		if label != '':
+			self.print_progress.remove(label)
+			self.print_time_elapsed.remove(label)
+			self.print_time_est.remove(label)
+			self.print_time_left_est.remove(label)
+		self.print_progress_label = ''
 
 	def slice_deregister_callback(self, label):
 		self.slice_progress.remove(label)
@@ -146,6 +154,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	def deactivateMetricsIfOffline(self, payload):
 		if payload['state_id'] == 'OFFLINE':
 			self.print_complete_callback()
+			self.print_deregister_callback(self.print_progress_label)
 			#not really safe, totally not threadsafe, but I didn't found better alternative
 			try:
 				self.temps_actual._metrics.clear()
@@ -250,6 +259,12 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 				v = getattr(self.parser, "print_fan_speed")
 				if v is not None:
 					self.print_fan_speed.set(v)
+			if self.print_progress_label != '':
+				data = self._printer.get_current_data()
+				#self._logger.info(data)
+				self.print_time_elapsed.labels(self.print_progress_label).set(data['progress']['printTime'])
+				self.print_time_est.labels(self.print_progress_label).set(data['job']['estimatedPrintTime'])
+				self.print_time_left_est.labels(self.print_progress_label).set(data['progress']['printTimeLeft'])
 
 		return None  # no change
 

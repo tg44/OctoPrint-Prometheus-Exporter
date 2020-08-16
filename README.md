@@ -25,6 +25,9 @@ Currently exported metrics:
   - extrusion total - as counter
   - x, y and z travel - as a counter
   - last print extrusion - as gauge
+  - print time elapsed - as gauge
+  - print time estimate - as gauge
+  - print time left estimation - as gauge
 
 All of the metrics are prefixed as `octoprint_` for easier identification.
 
@@ -76,6 +79,7 @@ There is a docker-compose file, which will start:
      - pip install "OctoPrint>=1.4.0rc1"
      - pip install -e .
      - octoprint serve --debug
+     - (on mac there could be a hidden "give me a root password" line)
  - a prometheus instance on port 9090
    - configured to pull the metrics from the octoprint
  - a grafana instance on port 3000
