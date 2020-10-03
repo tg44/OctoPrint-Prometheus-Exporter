@@ -76,7 +76,7 @@ There is a docker-compose file, which will start:
      - cd to the dir
      - virtualenv --python=/usr/bin/python3 venv3
      - source venv3/bin/activate
-     - pip install "OctoPrint>=1.4.0rc1"
+     - pip install "OctoPrint>=1.4.0"
      - pip install -e .
      - octoprint serve --debug
      - (on mac there could be a hidden "give me a root password" line)
