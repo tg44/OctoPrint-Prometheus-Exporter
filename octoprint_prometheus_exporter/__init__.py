@@ -263,9 +263,12 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			if self.print_progress_label != '':
 				data = self._printer.get_current_data()
 				#self._logger.info(data)
-				self.print_time_elapsed.labels(self.print_progress_label).set(data['progress']['printTime'])
-				self.print_time_est.labels(self.print_progress_label).set(data['job']['estimatedPrintTime'])
-				self.print_time_left_est.labels(self.print_progress_label).set(data['progress']['printTimeLeft'])
+				if data['progress']['printTime'] is not None:
+					self.print_time_elapsed.labels(self.print_progress_label).set(data['progress']['printTime'])
+				if data['progress']['printTimeLeft'] is not None:
+					self.print_time_left_est.labels(self.print_progress_label).set(data['progress']['printTimeLeft'])
+				if data['job']['estimatedPrintTime'] is not None:
+					self.print_time_est.labels(self.print_progress_label).set(data['job']['estimatedPrintTime'])
 
 		return None  # no change
 
