@@ -17,8 +17,6 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 							   octoprint.plugin.ProgressPlugin,
 							   octoprint.plugin.EventHandlerPlugin):
 
-	_registry = CollectorRegistry(auto_describe=True)
-
 	def initialize(self):
 		# if the following returns None it makes no sense to create the
 		# timer and fail every second
@@ -40,8 +38,8 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 
 	# TEMP
-	temps_actual = Gauge('octoprint_temperatures_actual', 'Reported temperatures', ['identifier'], registry=_registry)
-	temps_target = Gauge('octoprint_temperatures_target', 'Targeted temperatures', ['identifier'], registry=_registry)
+	temps_actual = Gauge('octoprint_temperatures_actual', 'Reported temperatures', ['identifier'])
+	temps_target = Gauge('octoprint_temperatures_target', 'Targeted temperatures', ['identifier'])
 
 	def get_temp_update(self, comm, parsed_temps):
 		for k, v in parsed_temps.items():
@@ -52,7 +50,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 					self.temps_target.labels(k).set(v[1])
 		return parsed_temps
 
-	raspberry_core_temp = Gauge('octoprint_raspberry_core_temperature', 'Core temperature of Raspberry Pi', registry=_registry)
+	raspberry_core_temp = Gauge('octoprint_raspberry_core_temperature', 'Core temperature of Raspberry Pi')
 	def report_raspberry_core_temperature(self):
 		temp = self.get_raspberry_core_temperature()
 		if temp is not None:
@@ -72,7 +70,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 
 	# INFO
-	octoprint_info = Info('octoprint_infos', 'Octoprint host informations', registry=_registry)
+	octoprint_info = Info('octoprint_infos', 'Octoprint host informations')
 
 	def on_after_startup(self):
 		import socket
@@ -87,7 +85,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		pass
 
 	# CLIENT NUM
-	client_num = Gauge('octoprint_client_num', 'The number of connected clients', registry=_registry)
+	client_num = Gauge('octoprint_client_num', 'The number of connected clients')
 
 	def clientnum_inc(self):
 		self.client_num.inc()
@@ -95,31 +93,31 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.client_num.dec()
 
 	# PRINTER STATE
-	printer_state = Info('octoprint_printer_state', 'Printer connection info', registry=_registry)
+	printer_state = Info('octoprint_printer_state', 'Printer connection info')
 
 	def set_printer_info(self, payload):
 		self.printer_state.info(payload)
 
 	# PRINTING
-	started_print_counter = Counter('octoprint_started_prints', 'Started print jobs', registry=_registry)
-	failed_print_counter = Counter('octoprint_failed_prints', 'Failed print jobs', registry=_registry)
-	done_print_counter = Counter('octoprint_done_prints', 'Done print jobs', registry=_registry)
-	cancelled_print_counter = Counter('octoprint_cancelled_prints', 'Cancelled print jobs', registry=_registry)
+	started_print_counter = Counter('octoprint_started_prints', 'Started print jobs')
+	failed_print_counter = Counter('octoprint_failed_prints', 'Failed print jobs')
+	done_print_counter = Counter('octoprint_done_prints', 'Done print jobs')
+	cancelled_print_counter = Counter('octoprint_cancelled_prints', 'Cancelled print jobs')
 
 	# TIMELAPSE
-	timelapse_counter = Counter('octoprint_captured_timelapses', 'Timelapse captured', registry=_registry)
+	timelapse_counter = Counter('octoprint_captured_timelapses', 'Timelapse captured')
 
 	# PRINT PROGRESS
-	print_progress = Gauge('octoprint_print_progress', 'Print progress', ['path'], registry=_registry)
-	print_time_elapsed = Gauge('octoprint_print_time_elapsed', 'Print time elapsed', ['path'], registry=_registry)
-	print_time_est = Gauge('octoprint_print_time_est', 'Print time estimate', ['path'], registry=_registry)
-	print_time_left_est = Gauge('octoprint_print_time_left_estimate', 'Print time left estimate', ['path'], registry=_registry)
+	print_progress = Gauge('octoprint_print_progress', 'Print progress', ['path'])
+	print_time_elapsed = Gauge('octoprint_print_time_elapsed', 'Print time elapsed', ['path'])
+	print_time_est = Gauge('octoprint_print_time_est', 'Print time estimate', ['path'])
+	print_time_left_est = Gauge('octoprint_print_time_left_estimate', 'Print time left estimate', ['path'])
 
 	# SLICE PROGRESS
-	slice_progress = Gauge('octoprint_slice_progress', 'Slice progress', ['path'], registry=_registry)
+	slice_progress = Gauge('octoprint_slice_progress', 'Slice progress', ['path'])
 
 	# TOTAL PRINTING TIME
-	printing_time_total = Counter('octoprint_printing_time_total', 'Printing time total', registry=_registry)
+	printing_time_total = Counter('octoprint_printing_time_total', 'Printing time total')
 
 	def print_complete_callback(self):
 		self.extrusion_print.set(0)
@@ -203,23 +201,23 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		pass
 
 	# EXTRUSION
-	extrusion_total = Counter('octoprint_extrusion_total', 'Filament extruded total', registry=_registry)
-	extrusion_print = Gauge('octoprint_extrusion_print', 'Filament extruded this print', registry=_registry)
+	extrusion_total = Counter('octoprint_extrusion_total', 'Filament extruded total')
+	extrusion_print = Gauge('octoprint_extrusion_print', 'Filament extruded this print')
 
 	# X TRAVEL
-	x_travel_total = Counter('octoprint_x_travel_total', 'X axis travel total', registry=_registry)
-	x_travel_print = Gauge('octoprint_x_travel_print', 'X axis travel in this print', registry=_registry)
+	x_travel_total = Counter('octoprint_x_travel_total', 'X axis travel total')
+	x_travel_print = Gauge('octoprint_x_travel_print', 'X axis travel in this print')
 
 	# Y TRAVEL
-	y_travel_total = Counter('octoprint_y_travel_total', 'Y axis travel total', registry=_registry)
-	y_travel_print = Gauge('octoprint_y_travel_print', 'Y axis travel in this print', registry=_registry)
+	y_travel_total = Counter('octoprint_y_travel_total', 'Y axis travel total')
+	y_travel_print = Gauge('octoprint_y_travel_print', 'Y axis travel in this print')
 
 	# Z TRAVEL
-	z_travel_total = Counter('octoprint_z_travel_total', 'Z axis travel total', registry=_registry)
-	z_travel_print = Gauge('octoprint_z_travel_print', 'Z axis travel in this print', registry=_registry)
+	z_travel_total = Counter('octoprint_z_travel_total', 'Z axis travel total')
+	z_travel_print = Gauge('octoprint_z_travel_print', 'Z axis travel in this print')
 
 	# FAN SPEED
-	print_fan_speed = Gauge('octoprint_print_fan_speed', 'Fan speed', registry=_registry)
+	print_fan_speed = Gauge('octoprint_print_fan_speed', 'Fan speed')
 
 	def gcodephase_hook(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
 		if phase == "sent":
@@ -286,7 +284,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	# ENDPOINT
 	@octoprint.plugin.BlueprintPlugin.route("/metrics")
 	def metrics_endpoint(self):
-		return make_wsgi_app(registry=self._registry)
+		return make_wsgi_app()
 
 	##~~ Softwareupdate hook
 	def get_update_information(self):
