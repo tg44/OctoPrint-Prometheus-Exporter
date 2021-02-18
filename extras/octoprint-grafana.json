@@ -27,7 +27,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": "garrus_prometheus",
+      "datasource": "${DATASOURCE}",
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -110,7 +110,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": "garrus_prometheus",
+      "datasource": "${DATASOURCE}",
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -195,7 +195,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": "garrus_prometheus",
+      "datasource": "${DATASOURCE}",
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -274,7 +274,7 @@
     },
     {
       "cacheTimeout": null,
-      "datasource": null,
+      "datasource": "${DATASOURCE}",
       "gridPos": {
         "h": 6,
         "w": 4,
@@ -361,7 +361,7 @@
       "cacheTimeout": null,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${DATASOURCE}",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -454,7 +454,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${DATASOURCE}",
       "decimals": null,
       "fill": 1,
       "fillGradient": 0,
@@ -551,7 +551,24 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "DATASOURCE",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -577,5 +594,5 @@
   "variables": {
     "list": []
   },
-  "version": 7
+  "version": 8
 }
