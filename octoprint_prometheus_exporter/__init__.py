@@ -225,11 +225,9 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		if phase == "sent":
 			parse_result = self.parser.process_line(cmd)
 			if parse_result == "movement":
-				# extrusion_print is modeled as a gauge so we can reset it after every print
-				self.extrusion_print.set(self.parser.extrusion_counter)
-
 				if self.parser.extrusion_counter > self.last_extrusion_counter:
 					# extrusion_total is monotonically increasing for the lifetime of the plugin
+					self.extrusion_print.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
 					self.extrusion_total.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
 					self.last_extrusion_counter = self.parser.extrusion_counter
 
