@@ -66,7 +66,7 @@ Or if you have enabled authentication:
 
 ### Permission system
 
-New in version 0.2.0: by default all users / operators have access to the metrics endpoint. If you want to make metrics accessible to anonymous users (guests) without disabling your enitre authentication system simply add the metrics permission to the guest user group.
+New in version 0.2.0: by default all users / operators have access to the metrics endpoint. If you want to make metrics accessible to anonymous users (guests) without disabling your entire authentication system simply add the metrics permission to the guest user group.
 
 ## Local developement/testing
 
