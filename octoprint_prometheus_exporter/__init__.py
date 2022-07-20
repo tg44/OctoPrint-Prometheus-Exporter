@@ -283,6 +283,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 	# ENDPOINT
 	@octoprint.plugin.BlueprintPlugin.route("/metrics")
+	@octoprint.access.permissions.Permissions.PLUGIN_PROMETHEUS_EXPORTER_METRICS.require(403)
 	def metrics_endpoint(self):
 		return make_wsgi_app(registry=self._registry)
 
@@ -306,9 +307,24 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 				pip="https://github.com/tg44/OctoPrint-Prometheus-Exporter/archive/{target_version}.zip"
 			)
 		)
+	
+	def is_blueprint_protected(self):
+		# Disable global protection, use permission system.
+		return False
 
 __plugin_name__ = "Prometheus Exporter Plugin"
 __plugin_pythoncompat__ = ">=2.7,<4"
+
+def get_additional_permissions(*args, **kwargs):
+    return [
+        dict(key="METRICS",
+             name="Metrics access",
+             description="Allow access to Prometheus metrics. Includes the Status permission.",
+             roles=["metrics"],
+             dangerous=False,
+             default_groups=[octoprint.access.USER_GROUP],
+			 permissions=["STATUS"]),
+    ]
 
 def __plugin_load__():
 	global __plugin_implementation__
@@ -318,5 +334,6 @@ def __plugin_load__():
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
 		"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_temp_update,
-		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.gcodephase_hook
+		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.gcodephase_hook,
+		"octoprint.access.permissions": get_additional_permissions
 	}
