@@ -25,9 +25,6 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		if self.get_raspberry_core_temperature() is not None:
 			self.timer = RepeatedTimer(1.0, self.report_raspberry_core_temperature)
 			self.timer.start()
-		else:
-			self._logger.error('Failed to execute "sudo /usr/bin/vcgencmd"')
-			self._logger.error('Raspberry core temperature will not be reported')
 		self.parser = Gcode_parser()
 		self.last_extrusion_counter = 0
 		self.last_x_travel = 0
@@ -64,8 +61,13 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		# root@octopi:/etc/sudoers.d# cat /etc/sudoers.d/octoprint-vcgencmd
 		# pi ALL=NOPASSWD: /usr/bin/vcgencmd
 		# root@octopi:/etc/sudoers.d#
+		if not os.path.isfile('/usr/bin/vcgencmd'):
+			self._logger.info('Raspberry core temperature is not supported on this system')
+			return None
 		temp = os.popen('sudo /usr/bin/vcgencmd measure_temp').readline()
 		if not temp.startswith('temp='):
+			self._logger.error('Failed to execute "sudo /usr/bin/vcgencmd"')
+			self._logger.error('Raspberry core temperature will not be reported')
 			return None
 		temp = temp.replace('temp=','').replace("'C",'')
 		return float(temp)
