@@ -1,15 +1,46 @@
 """Prometheus metrics class"""
+import os
 from prometheus_client import Counter, Info, Gauge, make_wsgi_app, CollectorRegistry
+from octoprint.util import RepeatedTimer
 
 
 class Metrics:
 
     registry = CollectorRegistry(auto_describe=True)
 
+    def __init__(self, logger) -> None:
+        self._logger = logger
+        if self.get_raspberry_core_temperature() is not None:
+            raspberry_core_temp = Gauge('octoprint_raspberry_core_temperature', 'Core temperature of Raspberry Pi', registry=self.registry)
+            self.timer = RepeatedTimer(1.0, self.report_raspberry_core_temperature)
+            self.timer.start()
+        else:
+            self._logger.info('Raspberry core temperature is not supported on this system')
+
+    def report_raspberry_core_temperature(self):
+        temperature = self.get_raspberry_core_temperature()
+        if temperature is not None:
+            self.raspberry_core_temp.set(temperature)
+
+    def get_raspberry_core_temperature(self):
+        # You need to add pi users to sudoers so it can execute the vcgencmd command
+        #
+        # root@octopi:/etc/sudoers.d# cat /etc/sudoers.d/octoprint-vcgencmd
+        # pi ALL=NOPASSWD: /usr/bin/vcgencmd
+        # root@octopi:/etc/sudoers.d#
+        if not os.path.isfile('/usr/bin/vcgencmd'):
+            return None
+        temp = os.popen('sudo /usr/bin/vcgencmd measure_temp').readline()
+        if not temp.startswith('temp='):
+            self._logger.error('Failed to execute "sudo /usr/bin/vcgencmd"')
+            self._logger.error('Raspberry core temperature will not be reported')
+            return None
+        temp = temp.replace('temp=','').replace("'C",'')
+        return float(temp)
+
     # Temperatures
     temps_actual = Gauge('octoprint_temperatures_actual', 'Reported temperatures', ['identifier'], registry=registry)
     temps_target = Gauge('octoprint_temperatures_target', 'Targeted temperatures', ['identifier'], registry=registry)
-    raspberry_core_temp = Gauge('octoprint_raspberry_core_temperature', 'Core temperature of Raspberry Pi', registry=registry)
 
     # Metadata
     client_num = Gauge('octoprint_client_num', 'The number of connected clients', registry=registry)

@@ -3,14 +3,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from threading import Timer
 import time
-import os
 import socket
 import platform
 import octoprint.plugin
 from octoprint.access.permissions import Permissions
 from octoprint.access import USER_GROUP
 from octoprint.util.version import get_octoprint_version_string
-from octoprint.util import RepeatedTimer
 from .metrics import Metrics
 from .gcodeparser import Gcode_parser
 
@@ -23,10 +21,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	def initialize(self):
 		# if the following returns None it makes no sense to create the
 		# timer and fail every second
-		self.metrics = Metrics()
-		if self.get_raspberry_core_temperature() is not None:
-			self.timer = RepeatedTimer(1.0, self.report_raspberry_core_temperature)
-			self.timer.start()
+		self.metrics = Metrics(logger=self._logger)
 		self.parser = Gcode_parser()
 		self.last_extrusion_counter = 0
 		self.last_x_travel = 0
@@ -45,28 +40,6 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 				if not v[1] is None:
 					self.metrics.temps_target.labels(k).set(v[1])
 		return parsed_temps
-	
-	def report_raspberry_core_temperature(self):
-		temp = self.get_raspberry_core_temperature()
-		if temp is not None:
-			self.metrics.raspberry_core_temp.set(temp)
-
-	def get_raspberry_core_temperature(self):
-		# You need to add pi users to sudoers so it can execute the vcgencmd command
-		#
-		# root@octopi:/etc/sudoers.d# cat /etc/sudoers.d/octoprint-vcgencmd
-		# pi ALL=NOPASSWD: /usr/bin/vcgencmd
-		# root@octopi:/etc/sudoers.d#
-		if not os.path.isfile('/usr/bin/vcgencmd'):
-			self._logger.info('Raspberry core temperature is not supported on this system')
-			return None
-		temp = os.popen('sudo /usr/bin/vcgencmd measure_temp').readline()
-		if not temp.startswith('temp='):
-			self._logger.error('Failed to execute "sudo /usr/bin/vcgencmd"')
-			self._logger.error('Raspberry core temperature will not be reported')
-			return None
-		temp = temp.replace('temp=','').replace("'C",'')
-		return float(temp)
 
 	def on_after_startup(self):
 		self.metrics.octoprint_info.info({
