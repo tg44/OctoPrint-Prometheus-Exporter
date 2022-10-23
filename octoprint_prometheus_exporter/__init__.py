@@ -30,7 +30,6 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.print_progress_label = ''
 		self.print_completion_timer = None
 		self.print_time_start = 0
-		self.print_time_end = 0
 
 	def get_temp_update(self, comm, parsed_temps):
 		for k, v in parsed_temps.items():
@@ -48,15 +47,6 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			'platform': get_os(),
 			'app_start': str(int(time.time()))
 		})
-		pass
-
-	def clientnum_inc(self):
-		self.metrics.client_num.inc()
-	def clientnum_dec(self):
-		self.metrics.client_num.dec()
-
-	def set_printer_info(self, payload):
-		self.metrics.printer_state.info(payload)
 
 	def print_complete_callback(self):
 		self.metrics.print_complete()
@@ -74,7 +64,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.metrics.slice_progress.remove(label)
 
 	def print_complete(self):
-		self.metrics.printing_time_total.inc(self.print_time_end - self.print_time_start)
+		self.metrics.printing_time_total.inc(time.time() - self.print_time_start)
 
 		# In 30 seconds, reset all the progress variables back to 0
 		# At a default 10 second interval, this gives us plenty of room for Prometheus to capture the 100%
@@ -100,12 +90,12 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	##~~ EventHandlerPlugin mixin
 	def on_event(self, event, payload):
 		if event == 'ClientOpened':
-			self.clientnum_inc()
+			self.metrics.client_num.inc()
 		if event == 'ClientClosed':
-			self.clientnum_dec()
+			self.metrics.client_num.dec()
 		if event == 'PrinterStateChanged':
 			self.deactivateMetricsIfOffline(payload)
-			self.set_printer_info(payload)
+			self.metrics.printer_state.info(payload)
 		if event == 'PrintStarted':
 			self.print_time_start = time.time()
 			self.metrics.started_print_counter.inc()
@@ -120,15 +110,12 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.last_y_travel = 0
 			self.last_z_travel = 0
 		if event == 'PrintFailed':
-			self.print_time_end = time.time()
 			self.metrics.failed_print_counter.inc()
 			self.print_complete()
 		if event == 'PrintDone':
-			self.print_time_end = time.time()
 			self.metrics.done_print_counter.inc()
 			self.print_complete()
 		if event == 'PrintCancelled':
-			self.print_time_end = time.time()
 			self.metrics.cancelled_print_counter.inc()
 			self.print_complete()
 		if event == 'CaptureDone':
