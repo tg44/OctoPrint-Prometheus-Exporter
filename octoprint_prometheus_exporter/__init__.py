@@ -59,10 +59,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.metrics.printer_state.info(payload)
 
 	def print_complete_callback(self):
-		self.extrusion_print.set(0)
-		self.x_travel_print.set(0)
-		self.y_travel_print.set(0)
-		self.z_travel_print.set(0)
+		self.metrics.print_complete()
 		self.print_completion_timer = None
 
 	def print_deregister_callback(self, label):

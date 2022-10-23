@@ -38,6 +38,12 @@ class Metrics:
         temp = temp.replace('temp=','').replace("'C",'')
         return float(temp)
 
+    def print_complete(self):
+        self.extrusion_print.set(0)
+        self.x_travel_print.set(0)
+        self.y_travel_print.set(0)
+        self.z_travel_print.set(0)   
+
     # Temperatures
     temps_actual = Gauge('octoprint_temperatures_actual', 'Reported temperatures', ['identifier'], registry=registry)
     temps_target = Gauge('octoprint_temperatures_target', 'Targeted temperatures', ['identifier'], registry=registry)
