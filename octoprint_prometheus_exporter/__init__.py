@@ -3,12 +3,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from threading import Timer
 import time
-import socket
-import platform
 import octoprint.plugin
 from octoprint.access.permissions import Permissions
 from octoprint.access import USER_GROUP
 from octoprint.util.version import get_octoprint_version_string
+from octoprint.util.platform import get_os
 from .metrics import Metrics
 from .gcodeparser import Gcode_parser
 
@@ -16,6 +15,7 @@ from .gcodeparser import Gcode_parser
 class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 							   octoprint.plugin.StartupPlugin,
 							   octoprint.plugin.ProgressPlugin,
+							   octoprint.plugin.SettingsPlugin,
 							   octoprint.plugin.EventHandlerPlugin):
 
 	def initialize(self):
@@ -44,9 +44,9 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 	def on_after_startup(self):
 		self.metrics.octoprint_info.info({
 			'octoprint_version': get_octoprint_version_string(),
-			'host': socket.gethostname(),
-			'platform': platform.system(),
-			'app_start': str(int(time.time())),
+			'host': self._settings.get(['appearance', 'name']) or 'OctoPrint',
+			'platform': get_os(),
+			'app_start': str(int(time.time()))
 		})
 		pass
 
