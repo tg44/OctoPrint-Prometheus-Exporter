@@ -5,6 +5,8 @@ from threading import Timer
 import time
 import os
 import octoprint.plugin
+from octoprint.access.permissions import Permissions
+from octoprint.access import USER_GROUP
 from octoprint.util.version import get_octoprint_version_string
 from octoprint.util import RepeatedTimer
 from prometheus_client import Counter, Info, Gauge, make_wsgi_app, CollectorRegistry
@@ -285,7 +287,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 	# ENDPOINT
 	@octoprint.plugin.BlueprintPlugin.route("/metrics")
-	@octoprint.access.permissions.Permissions.PLUGIN_PROMETHEUS_EXPORTER_METRICS.require(403)
+	@Permissions.PLUGIN_PROMETHEUS_EXPORTER_SCRAPE.require(403)
 	def metrics_endpoint(self):
 		return make_wsgi_app(registry=self._registry)
 
@@ -314,19 +316,19 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		# Disable global protection, use permission system.
 		return False
 
+	def get_additional_permissions(self):
+		return [{
+			"key": "SCRAPE",
+			"name": "Metrics access",
+			"description": "Allow access to Prometheus metrics.",
+			"dangerous": False,
+			"default_groups": [USER_GROUP],
+			"roles": ["scrape"],
+			"permissions": ["STATUS"]
+		}]
+
 __plugin_name__ = "Prometheus Exporter Plugin"
 __plugin_pythoncompat__ = ">=2.7,<4"
-
-def get_additional_permissions(*args, **kwargs):
-    return [
-        dict(key="METRICS",
-             name="Metrics access",
-             description="Allow access to Prometheus metrics. Includes the Status permission.",
-             roles=["metrics"],
-             dangerous=False,
-             default_groups=[octoprint.access.USER_GROUP],
-			 permissions=["STATUS"]),
-    ]
 
 def __plugin_load__():
 	global __plugin_implementation__
@@ -337,5 +339,5 @@ def __plugin_load__():
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
 		"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_temp_update,
 		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.gcodephase_hook,
-		"octoprint.access.permissions": get_additional_permissions
+		"octoprint.access.permissions": __plugin_implementation__.get_additional_permissions
 	}
