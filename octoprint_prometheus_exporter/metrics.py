@@ -129,19 +129,19 @@ class Metrics:
 
     job_time_elapsed = Gauge(
         'octoprint_job_time_elapsed_seconds',
-        'Print job time elapsed in seconds.',
+        'Print job time elapsed in seconds',
         ['path'],
         registry=registry)
 
     job_time_est = Gauge(
         'octoprint_job_time_est_seconds',
-        'Print job time estimate in seconds.',
+        'Print job time estimate in seconds',
         ['path'],
         registry=registry)
 
     job_time_left_est = Gauge(
         'octoprint_job_time_left_estimate_seconds',
-        'Print job time left estimate in seconds.',
+        'Print job time left estimate in seconds',
         ['path'],
         registry=registry)
 
