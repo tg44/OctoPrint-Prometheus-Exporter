@@ -35,13 +35,13 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		for k, v in parsed_temps.items():
 			if isinstance(v, tuple) and len(v) == 2:
 				if not v[0] is None:
-					self.metrics.temps_actual.labels(k).set(v[0])
+					self.metrics.printer_temps_actual.labels(k).set(v[0])
 				if not v[1] is None:
-					self.metrics.temps_target.labels(k).set(v[1])
+					self.metrics.printer_temps_target.labels(k).set(v[1])
 		return parsed_temps
 
 	def on_after_startup(self):
-		self.metrics.octoprint_info.info({
+		self.metrics.server_info.info({
 			'octoprint_version': get_octoprint_version_string(),
 			'host': self._settings.get(['appearance', 'name']) or 'OctoPrint',
 			'platform': get_os(),
@@ -49,22 +49,22 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		})
 
 	def print_complete_callback(self):
-		self.metrics.print_complete()
+		self.metrics.job_complete()
 		self.print_completion_timer = None
 
 	def print_deregister_callback(self, label):
 		if label != '':
-			self.metrics.print_progress.remove(label)
-			self.metrics.print_time_elapsed.remove(label)
-			self.metrics.print_time_est.remove(label)
-			self.metrics.print_time_left_est.remove(label)
+			self.metrics.job_progress.remove(label)
+			self.metrics.job_time_elapsed.remove(label)
+			self.metrics.job_time_est.remove(label)
+			self.metrics.job_time_left_est.remove(label)
 		self.print_progress_label = ''
 
 	def slice_deregister_callback(self, label):
-		self.metrics.slice_progress.remove(label)
+		self.metrics.server_slice_progress.remove(label)
 
 	def print_complete(self):
-		self.metrics.printing_time_total.inc(time.time() - self.print_time_start)
+		self.metrics.jobs_time_total.inc(time.time() - self.print_time_start)
 
 		# In 30 seconds, reset all the progress variables back to 0
 		# At a default 10 second interval, this gives us plenty of room for Prometheus to capture the 100%
@@ -82,23 +82,23 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.print_deregister_callback(self.print_progress_label)
 			#not really safe, totally not threadsafe, but I didn't found better alternative
 			try:
-				self.metrics.temps_actual._metrics.clear()
-				self.metrics.temps_target._metrics.clear()
+				self.metrics.printer_temps_actual._metrics.clear()
+				self.metrics.printer_temps_target._metrics.clear()
 			except Exception as err:
 				self._logger.warning(err)
 
 	##~~ EventHandlerPlugin mixin
 	def on_event(self, event, payload):
 		if event == 'ClientOpened':
-			self.metrics.client_num.inc()
+			self.metrics.server_clients.inc()
 		if event == 'ClientClosed':
-			self.metrics.client_num.dec()
+			self.metrics.server_clients.dec()
 		if event == 'PrinterStateChanged':
 			self.deactivateMetricsIfOffline(payload)
 			self.metrics.printer_state.info(payload)
 		if event == 'PrintStarted':
 			self.print_time_start = time.time()
-			self.metrics.started_print_counter.inc()
+			self.metrics.jobs_started.inc()
 			# If there's a completion timer running, kill it.
 			if self.print_completion_timer:
 				self.print_completion_timer.cancel()
@@ -110,16 +110,16 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.last_y_travel = 0
 			self.last_z_travel = 0
 		if event == 'PrintFailed':
-			self.metrics.failed_print_counter.inc()
+			self.metrics.jobs_failed.inc()
 			self.print_complete()
 		if event == 'PrintDone':
-			self.metrics.done_print_counter.inc()
+			self.metrics.jobs_done.inc()
 			self.print_complete()
 		if event == 'PrintCancelled':
-			self.metrics.cancelled_print_counter.inc()
+			self.metrics.jobs_cancelled.inc()
 			self.print_complete()
 		if event == 'CaptureDone':
-			self.metrics.timelapse_counter.inc()
+			self.metrics.server_timelapses.inc()
 		pass
 
 	def gcodephase_hook(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
@@ -128,56 +128,56 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			if parse_result == "movement":
 				if self.parser.extrusion_counter > self.last_extrusion_counter:
 					# extrusion_total is monotonically increasing for the lifetime of the plugin
-					self.metrics.extrusion_print.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
-					self.metrics.extrusion_total.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
+					self.metrics.job_extrusion.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
+					self.metrics.printer_extrusion.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
 					self.last_extrusion_counter = self.parser.extrusion_counter
 
 				# x_travel_print is modeled as a gauge so we can reset it after every print
-				self.metrics.x_travel_print.set(self.parser.x_travel)
+				self.metrics.job_travel_x.set(self.parser.x_travel)
 
 				if self.parser.x_travel > self.last_x_travel:
 					# x_travel_total is monotonically increasing for the lifetime of the plugin
-					self.metrics.x_travel_total.inc(self.parser.x_travel - self.last_x_travel)
+					self.metrics.printer_travel_x.inc(self.parser.x_travel - self.last_x_travel)
 					self.last_x_travel = self.parser.x_travel
 
 				# y_travel_print is modeled as a gauge so we can reset it after every print
-				self.metrics.y_travel_print.set(self.parser.y_travel)
+				self.metrics.job_travel_y.set(self.parser.y_travel)
 
 				if self.parser.y_travel > self.last_y_travel:
 					# y_travel_total is monotonically increasing for the lifetime of the plugin
-					self.metrics.y_travel_total.inc(self.parser.y_travel - self.last_y_travel)
+					self.metrics.printer_travel_y.inc(self.parser.y_travel - self.last_y_travel)
 					self.last_y_travel = self.parser.y_travel
 
 				# z_travel_print is modeled as a gauge so we can reset it after every print
-				self.metrics.z_travel_print.set(self.parser.z_travel)
+				self.metrics.job_travel_z.set(self.parser.z_travel)
 
 				if self.parser.z_travel > self.last_z_travel:
 					# z_travel_total is monotonically increasing for the lifetime of the plugin
-					self.metrics.z_travel_total.inc(self.parser.z_travel - self.last_z_travel)
+					self.metrics.printer_travel_z.inc(self.parser.z_travel - self.last_z_travel)
 					self.last_z_travel = self.parser.z_travel
 			elif parse_result == "print_fan_speed":
 				v = getattr(self.parser, "print_fan_speed")
 				if v is not None:
-					self.metrics.print_fan_speed.set(v)
+					self.metrics.printer_fan_speed.set(v)
 			if self.print_progress_label != '':
 				data = self._printer.get_current_data()
 				#self._logger.info(data)
 				if data['progress']['printTime'] is not None:
-					self.metrics.print_time_elapsed.labels(self.print_progress_label).set(data['progress']['printTime'])
+					self.metrics.job_time_elapsed.labels(self.print_progress_label).set(data['progress']['printTime'])
 				if data['progress']['printTimeLeft'] is not None:
-					self.metrics.print_time_left_est.labels(self.print_progress_label).set(data['progress']['printTimeLeft'])
+					self.metrics.job_time_left_est.labels(self.print_progress_label).set(data['progress']['printTimeLeft'])
 				if data['job']['estimatedPrintTime'] is not None:
-					self.metrics.print_time_est.labels(self.print_progress_label).set(data['job']['estimatedPrintTime'])
+					self.metrics.job_time_est.labels(self.print_progress_label).set(data['job']['estimatedPrintTime'])
 
 		return None  # no change
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
 		self.metrics.print_progress_label = path
-		self.metrics.print_progress.labels(path).set(progress)
+		self.metrics.job_progress.labels(path).set(progress)
 		pass
 	def	on_slicing_progress(self, slicer, source_location, source_path, destination_location, destination_path, progress):
-		self.metrics.slice_progress.labels(source_path).set(progress)
+		self.metrics.server_slice_progress.labels(source_path).set(progress)
 		if progress >= 100:
 			Timer(30, lambda: self.slice_deregister_callback(source_path)).start()
 		pass
