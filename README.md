@@ -7,7 +7,7 @@ This plugin has no visible UI!
 
 ## Metrics
 
-All of the metrics are prefixed as `octoprint_` for easier identification.Metrics for distance and temperature are showed in the units configured in the 3D printer firmware.
+All metrics are prefixed as `octoprint_` for easier identification. Metrics for distance and temperature are showed in the units configured in the 3D printer firmware.
 
 The metrics endpoint is: /plugin/prometheus_exporter/metrics. If your OctoPrint runs on localhost:5000 this leads to http://localhost:5000/plugin/prometheus_exporter/metrics as scrape target.
 
@@ -22,10 +22,10 @@ The metrics endpoint is: /plugin/prometheus_exporter/metrics. If your OctoPrint 
 ### Jobs
 
 * `octoprint_jobs_time_seconds`: Counter, combined printing time in seconds.
-* `octoprint_started_prints`: Counter, amount of started prints.
-* `octoprint_failed_prints`: Counter, amount of failed prints.
-* `octoprint_done_prints`: Counter, amount of finished prints.
-* `octoprint_cancelled_prints`: Counter, amount of cancelled prints.
+* `octoprint_jobs_started`: Counter, amount of started prints.
+* `octoprint_jobs_failed`: Counter, amount of failed prints.
+* `octoprint_jobs_done`: Counter, amount of finished prints.
+* `octoprint_jobs_cancelled`: Counter, amount of cancelled prints.
 
 ### Printer
 

@@ -39,22 +39,22 @@ class Metrics:
         registry=registry)
 
     jobs_started = Counter(
-        'octoprint_started_prints',
+        'octoprint_jobs_started',
         'Started print jobs',
         registry=registry)
 
     jobs_failed = Counter(
-        'octoprint_failed_prints',
+        'octoprint_jobs_failed',
         'Failed print jobs',
         registry=registry)
 
     jobs_done = Counter(
-        'octoprint_done_prints',
+        'octoprint_jobs_done',
         'Done print jobs',
         registry=registry)
 
     jobs_cancelled = Counter(
-        'octoprint_cancelled_prints',
+        'octoprint_jobs_cancelled',
         'Cancelled print jobs',
         registry=registry)
 
