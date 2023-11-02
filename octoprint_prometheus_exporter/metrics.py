@@ -11,7 +11,7 @@ class Metrics:
     def __init__(self, logger) -> None:
         self._logger = logger
         if self.get_raspberry_core_temperature() is not None:
-            raspberry_core_temp = Gauge('octoprint_raspberry_core_temperature', 'Core temperature of Raspberry Pi', registry=self.registry)
+            self.raspberry_core_temp = Gauge('octoprint_raspberry_core_temperature', 'Core temperature of Raspberry Pi', registry=self.registry)
             self.timer = RepeatedTimer(1.0, self.report_raspberry_core_temperature)
             self.timer.start()
         else:
