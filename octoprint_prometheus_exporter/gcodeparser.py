@@ -70,20 +70,10 @@ class Gcode_parser(object):
         return x, y, z, e, speed
 
     def parse_fan_speed(self, line):
-        m = self.FAN_SET_RE.match(line)
-        if m:
+        if self.FAN_SET_RE.match(line):
             m = self.FAN_SPEED_RE.match(line)
-            if m:
-                speed = float(m.groups()[0])
-            else:
-                speed = 255.0
-            return speed
-
-        m = self.FAN_OFF_RE.match(line)
-        if m:
-            return 0.0
-
-        return None
+            return float(m.groups()[0]) if m else 255.0
+        return 0.0 if self.FAN_OFF_RE.match(line) else None
 
     def process_axis_movement(self, target_position, current_position):
         return abs(current_position - target_position)
