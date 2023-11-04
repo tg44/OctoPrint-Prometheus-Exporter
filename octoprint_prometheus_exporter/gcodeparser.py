@@ -48,36 +48,26 @@ class Gcode_parser(object):
         """
 
         m = self.MOVE_RE.match(line)
-        if m:
-            x = None
-            y = None
-            z = None
-            e = None
-            speed = None
 
-            m = self.X_COORD_RE.match(line)
-            if m:
-                x = float(m.groups()[0])
+        if m is None:
+            return
 
-            m = self.Y_COORD_RE.match(line)
-            if m:
-                y = float(m.groups()[0])
+        m = self.X_COORD_RE.match(line)
+        x = float(m.groups()[0]) if m else None
 
-            m = self.Z_COORD_RE.match(line)
-            if m:
-                z = float(m.groups()[0])
+        m = self.Y_COORD_RE.match(line)
+        y = float(m.groups()[0]) if m else None
 
-            m = self.E_COORD_RE.match(line)
-            if m:
-                e = float(m.groups()[0])
+        m = self.Z_COORD_RE.match(line)
+        z = float(m.groups()[0]) if m else None
 
-            m = self.SPEED_VAL_RE.match(line)
-            if m:
-                speed = float(m.groups()[0])
+        m = self.E_COORD_RE.match(line)
+        e = float(m.groups()[0]) if m else None
 
-            return x, y, z, e, speed
+        m = self.SPEED_VAL_RE.match(line)
+        speed = float(m.groups()[0]) if m else None
 
-        return None
+        return x, y, z, e, speed
 
     def parse_fan_speed(self, line):
         m = self.FAN_SET_RE.match(line)
