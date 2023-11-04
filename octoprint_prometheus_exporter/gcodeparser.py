@@ -90,29 +90,26 @@ class Gcode_parser(object):
 
     def process_line(self, line):
         movement = self.parse_move_args(line)
-        if movement is not None:
+        if movement:
             (x, y, z, e, speed) = movement
-            if e is not None:
+            if e:
                 self.extrusion_counter += e
                 self.e = e
-            if x is not None:
-                if self.x is not None:
-                    self.x_travel += self.process_axis_movement(x, self.x)
+            if x:
+                self.x_travel += abs(self.x - x) if self.x else 0
                 self.x = x
-            if y is not None:
-                if self.y is not None:
-                    self.y_travel += self.process_axis_movement(y, self.y)
+            if y:
+                self.y_travel += abs(self.y - y) if self.y else 0
                 self.y = y
-            if z is not None:
-                if self.z is not None:
-                    self.z_travel += self.process_axis_movement(z, self.z)
+            if z:
+                self.z_travel += abs(self.z - z) if self.z else 0
                 self.z = z
-            if speed is not None:
+            if speed:
                 self.speed = speed
             return "movement"
 
         fanspeed = self.parse_fan_speed(line)
-        if fanspeed is not None:
+        if fanspeed:
             self.print_fan_speed = fanspeed
             return "print_fan_speed"
 
