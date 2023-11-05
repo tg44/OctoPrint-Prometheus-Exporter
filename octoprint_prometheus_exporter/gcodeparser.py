@@ -7,17 +7,16 @@ import sys
 
 # stolen directly from filaswitch
 class Gcode_parser(object):
-    MOVE_RE = re.compile("^G0\s+|^G1\s+")
-    X_COORD_RE = re.compile(".*\s+X([-]*\d+\.*\d*)")
-    Y_COORD_RE = re.compile(".*\s+Y([-]*\d+\.*\d*)")
-    E_COORD_RE = re.compile(".*\s+E([-]*\d+\.*\d*)")
-    Z_COORD_RE = re.compile(".*\s+Z([-]*\d+\.*\d*)")
-    SPEED_VAL_RE = re.compile(".*\s+F(\d+\.*\d*)")
-
-    FAN_SET_RE = re.compile("^M106\s+")
-    FAN_SPEED_RE = re.compile(".*\s+S(\d+\.*\d*)")
-
-    FAN_OFF_RE = re.compile("^M107")
+    
+    MOVE_RE = re.compile(r"^G0\s+|^G1\s+")
+    X_COORD_RE = re.compile(r".*\s+X([-]*\d+\.*\d*)")
+    Y_COORD_RE = re.compile(r".*\s+Y([-]*\d+\.*\d*)")
+    E_COORD_RE = re.compile(r".*\s+E([-]*\d+\.*\d*)")
+    Z_COORD_RE = re.compile(r".*\s+Z([-]*\d+\.*\d*)")
+    SPEED_VAL_RE = re.compile(r".*\s+F(\d+\.*\d*)")
+    FAN_SET_RE = re.compile(r"^M106\s+")
+    FAN_SPEED_RE = re.compile(r".*\s+S(\d+\.*\d*)")
+    FAN_OFF_RE = re.compile(r"^M107")
 
     def __init__(self):
         self.reset()
