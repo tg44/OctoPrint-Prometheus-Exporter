@@ -66,9 +66,6 @@ class Gcode_parser(object):
             return float(m.groups()[0]) if m else 255.0
         return 0.0 if self.FAN_OFF_RE.match(line) else None
 
-    def process_axis_movement(self, target_position, current_position):
-        return abs(current_position - target_position)
-
     def process_line(self, line):
         movement = self.parse_move_args(line)
         if movement:
