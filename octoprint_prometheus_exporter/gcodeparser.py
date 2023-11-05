@@ -22,7 +22,6 @@ class Gcode_parser(object):
         self.reset()
 
     def reset(self):
-        self.last_extrusion_move = None
         self.extrusion_counter = 0
         self.x_travel = 0
         self.x = None
@@ -41,7 +40,7 @@ class Gcode_parser(object):
         m = self.MOVE_RE.match(line)
 
         if m is None:
-            return
+            return None
 
         m = self.X_COORD_RE.match(line)
         x = float(m.groups()[0]) if m else None
