@@ -7,7 +7,7 @@ import sys
 
 # stolen directly from filaswitch
 class Gcode_parser(object):
-    
+
     MOVE_RE = re.compile(r"^G0\s+|^G1\s+")
     X_COORD_RE = re.compile(r".*\s+X([-]*\d+\.*\d*)")
     Y_COORD_RE = re.compile(r".*\s+Y([-]*\d+\.*\d*)")
@@ -33,14 +33,6 @@ class Gcode_parser(object):
         self.e = None
         self.speed = None
         self.print_fan_speed = None
-
-    def is_extrusion_move(self, m):
-        """ args are a tuple (x,y,z,e,speed)
-        """
-        if m and (m[0] is not None or m[1] is not None) and m[3] is not None and m[3] != 0:
-            return True
-        else:
-            return False
 
     def parse_move_args(self, line):
         """ returns a tuple (x,y,z,e,speed) or None
