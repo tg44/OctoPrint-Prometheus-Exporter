@@ -1,3 +1,4 @@
+"""PrometheusExporterPlugin module."""
 # coding=utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -17,10 +18,10 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 							   octoprint.plugin.ProgressPlugin,
 							   octoprint.plugin.SettingsPlugin,
 							   octoprint.plugin.EventHandlerPlugin):
+	"""PrometheusExporter plugin class"""
 
 	def initialize(self):
-		# if the following returns None it makes no sense to create the
-		# timer and fail every second
+		"""Initialize plugin."""
 		self.metrics = Metrics(logger=self._logger)
 		self.parser = Gcode_parser()
 		self.last_extrusion_counter = 0
@@ -32,6 +33,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.print_time_start = 0
 
 	def get_temp_update(self, comm, parsed_temps):
+		"""Process parsed temperature updates"""
 		for k, v in parsed_temps.items():
 			if isinstance(v, tuple) and len(v) == 2:
 				if not v[0] is None:
@@ -41,6 +43,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		return parsed_temps
 
 	def on_after_startup(self):
+		"""Set information endpoint after startup."""
 		self.metrics.server_info.info({
 			'octoprint_version': get_octoprint_version_string(),
 			'host': self._settings.get(['appearance', 'name']) or 'OctoPrint',
@@ -49,10 +52,12 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		})
 
 	def print_complete_callback(self):
+		"""Printjob complete callback"""
 		self.metrics.job_complete()
 		self.print_completion_timer = None
 
 	def print_deregister_callback(self, label):
+		"""Deregister job metrics callback"""
 		if label != '':
 			self.metrics.job_progress.remove(label)
 			self.metrics.job_time_elapsed.remove(label)
@@ -61,9 +66,11 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.print_progress_label = ''
 
 	def slice_deregister_callback(self, label):
+		"""Deregister slice metrics callback"""
 		self.metrics.server_slice_progress.remove(label)
 
 	def print_complete(self):
+		"""Actions to perform on job complete event"""
 		self.metrics.jobs_time_total.inc(time.time() - self.print_time_start)
 
 		# In 30 seconds, reset all the progress variables back to 0
@@ -77,6 +84,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		Timer(30, lambda: self.print_deregister_callback(self.print_progress_label)).start()
 
 	def deactivateMetricsIfOffline(self, payload):
+		"""Actions to perform if printer goes offline"""
 		if payload['state_id'] == 'OFFLINE':
 			self.print_complete_callback()
 			self.print_deregister_callback(self.print_progress_label)
@@ -87,8 +95,11 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			except Exception as err:
 				self._logger.warning(err)
 
-	##~~ EventHandlerPlugin mixin
-	def on_event(self, event, payload):
+	def on_event(self, event: str, payload: dict):
+		"""Event callback.
+		
+		Called by the EventHandlerPlugin.
+		"""
 		if event == 'ClientOpened':
 			self.metrics.server_clients.inc()
 		if event == 'ClientClosed':
@@ -120,9 +131,9 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.print_complete()
 		if event == 'CaptureDone':
 			self.metrics.server_timelapses.inc()
-		pass
-
+		
 	def gcodephase_hook(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
+		"""GCode callback."""
 		if phase == "sent":
 			parse_result = self.parser.process_line(cmd)
 			if parse_result == "movement":
@@ -171,61 +182,65 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 		return None  # no change
 
-	##~~ ProgressPlugin mixin
-	def on_print_progress(self, storage, path, progress):
+	def on_print_progress(self, storage: str, path: str, progress: int):
+		"""Print progress callback"""
 		self.metrics.print_progress_label = path
 		self.metrics.job_progress.labels(path).set(progress)
-		pass
-	def	on_slicing_progress(self, slicer, source_location, source_path, destination_location, destination_path, progress):
+		
+	def	on_slicing_progress(self, 
+							slicer: str, 
+							source_location: str, 
+							source_path: str, 
+							destination_location: str, 
+							destination_path: str, 
+							progress: int):
+		"""Slicing progress callback"""
 		self.metrics.server_slice_progress.labels(source_path).set(progress)
 		if progress >= 100:
 			Timer(30, lambda: self.slice_deregister_callback(source_path)).start()
-		pass
 
-	# ENDPOINT
-	@octoprint.plugin.BlueprintPlugin.route("/metrics")
+	@octoprint.plugin.BlueprintPlugin.route('/metrics')
 	@Permissions.PLUGIN_PROMETHEUS_EXPORTER_SCRAPE.require(403)
 	def metrics_endpoint(self):
+		"""Metrics API endpoint"""
 		return self.metrics.render()
 
-	##~~ Softwareupdate hook
-	def get_update_information(self):
-		# Define the configuration for your plugin to use with the Software Update
-		# Plugin here. See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update
-		# for details.
-		return dict(
-			prometheus_exporter=dict(
-				displayName="Prometheus Exporter Plugin",
-				displayVersion=self._plugin_version,
-
-				# version check: github repository
-				type="github_release",
-				user="tg44",
-				repo="OctoPrint-Prometheus-Exporter",
-				current=self._plugin_version,
-
-				# update method: pip
-				pip="https://github.com/tg44/OctoPrint-Prometheus-Exporter/archive/{target_version}.zip"
-			)
-		)
+	def get_update_information(self) -> dict:
+		"""Define the configuration for your plugin to use with the Software Update Plugin.
+		
+		See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update for details.
+		"""
+		return {'prometheus_exporter':{
+			'displayName': 'Prometheus Exporter Plugin',
+			'displayVersion': self._plugin_version,
+			'type': 'github_release',
+			'user': 'tg44',
+			'repo': 'OctoPrint-Prometheus-Exporter',
+			'current': self._plugin_version,
+			'pip': 
+				'https://github.com/tg44/OctoPrint-Prometheus-Exporter/archive/{target_version}.zip'		
+		}}
 	
-	def is_blueprint_protected(self):
-		# Disable global protection, use permission system.
+	def is_blueprint_protected(self) -> bool:
+		"""Disable global protection, use permission system."""
 		return False
 
-	def get_additional_permissions(self):
+	def get_additional_permissions(self) -> list:
+		"""Register permissions for this plugin"""
 		return [{
-			"key": "SCRAPE",
-			"name": "Metrics access",
-			"description": "Allow access to Prometheus metrics.",
-			"dangerous": False,
-			"default_groups": [USER_GROUP],
-			"roles": ["scrape"],
-			"permissions": ["STATUS"]
+			'key': 'SCRAPE',
+			'name': 'Metrics access',
+			'description': 'Allow access to Prometheus metrics.',
+			'dangerous': False,
+			'default_groups': [USER_GROUP],
+			'roles': ['scrape'],
+			'permissions': ['STATUS']
 		}]
 
-__plugin_name__ = "Prometheus Exporter Plugin"
-__plugin_pythoncompat__ = ">=2.7,<4"
+
+__plugin_name__ = 'Prometheus Exporter Plugin'
+__plugin_pythoncompat__ = '>=2.7,<4'
+
 
 def __plugin_load__():
 	global __plugin_implementation__
@@ -233,8 +248,8 @@ def __plugin_load__():
 
 	global __plugin_hooks__
 	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+		'octoprint.plugin.softwareupdate.check_config': __plugin_implementation__.get_update_information,
 		"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_temp_update,
-		"octoprint.comm.protocol.gcode.sent": __plugin_implementation__.gcodephase_hook,
-		"octoprint.access.permissions": __plugin_implementation__.get_additional_permissions
+		'octoprint.comm.protocol.gcode.sent': __plugin_implementation__.gcodephase_hook,
+		'octoprint.access.permissions': __plugin_implementation__.get_additional_permissions
 	}
