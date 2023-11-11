@@ -32,7 +32,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.print_completion_timer = None
 		self.print_time_start = 0
 
-	def get_temp_update(self, comm, parsed_temps):
+	def on_temp_received(self, comm, parsed_temps: dict) -> dict:
 		"""Process parsed temperature updates"""
 		for k, v in parsed_temps.items():
 			if isinstance(v, tuple) and len(v) == 2:
@@ -51,7 +51,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			'app_start': str(int(time.time()))
 		})
 
-	def print_complete_callback(self):
+	def on_job_complete_callback(self):
 		"""Printjob complete callback"""
 		self.metrics.job_complete()
 		self.print_completion_timer = None
@@ -69,7 +69,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		"""Deregister slice metrics callback"""
 		self.metrics.server_slice_progress.remove(label)
 
-	def print_complete(self):
+	def on_job_complete(self):
 		"""Actions to perform on job complete event"""
 		self.metrics.jobs_time_total.inc(time.time() - self.print_time_start)
 
@@ -79,14 +79,14 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 		# TODO: Is this really a good idea?
 
-		self.print_completion_timer = Timer(30, self.print_complete_callback)
+		self.print_completion_timer = Timer(30, self.on_job_complete_callback)
 		self.print_completion_timer.start()
 		Timer(30, lambda: self.print_deregister_callback(self.print_progress_label)).start()
 
-	def deactivateMetricsIfOffline(self, payload):
+	def on_printer_offline(self, payload):
 		"""Actions to perform if printer goes offline"""
 		if payload['state_id'] == 'OFFLINE':
-			self.print_complete_callback()
+			self.on_job_complete_callback()
 			self.print_deregister_callback(self.print_progress_label)
 			#not really safe, totally not threadsafe, but I didn't found better alternative
 			try:
@@ -105,7 +105,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		if event == 'ClientClosed':
 			self.metrics.server_clients.dec()
 		if event == 'PrinterStateChanged':
-			self.deactivateMetricsIfOffline(payload)
+			self.on_printer_offline(payload)
 			self.metrics.printer_state.info(payload)
 		if event == 'PrintStarted':
 			self.print_time_start = time.time()
@@ -122,17 +122,17 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 			self.last_z_travel = 0
 		if event == 'PrintFailed':
 			self.metrics.jobs_failed.inc()
-			self.print_complete()
+			self.on_job_complete()
 		if event == 'PrintDone':
 			self.metrics.jobs_done.inc()
-			self.print_complete()
+			self.on_job_complete()
 		if event == 'PrintCancelled':
 			self.metrics.jobs_cancelled.inc()
-			self.print_complete()
+			self.on_job_complete()
 		if event == 'CaptureDone':
 			self.metrics.server_timelapses.inc()
 		
-	def gcodephase_hook(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
+	def on_gcode_sent(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
 		"""GCode callback."""
 		if phase == "sent":
 			parse_result = self.parser.process_line(cmd)
@@ -249,7 +249,7 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		'octoprint.plugin.softwareupdate.check_config': __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_temp_update,
-		'octoprint.comm.protocol.gcode.sent': __plugin_implementation__.gcodephase_hook,
+		'octoprint.comm.protocol.temperatures.received': __plugin_implementation__.on_temp_received,
+		'octoprint.comm.protocol.gcode.sent': __plugin_implementation__.on_gcode_sent,
 		'octoprint.access.permissions': __plugin_implementation__.get_additional_permissions
 	}
