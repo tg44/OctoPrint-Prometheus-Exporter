@@ -132,40 +132,43 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         if event == 'CaptureDone':
             self.metrics.server_timelapses.inc()
 
+    def process_travel_x(self, travel_x):
+        """Process travel in X direction"""
+        self.metrics.job_travel_x.set(travel_x)
+        if travel_x > self.last_x_travel:
+            self.metrics.printer_travel_x.inc(travel_x - self.last_x_travel)
+            self.last_x_travel = travel_x
+
+    def process_travel_y(self, travel_y):
+        """Process travel in Y direction"""
+        self.metrics.job_travel_y.set(travel_y)
+        if travel_y > self.last_y_travel:
+            self.metrics.printer_travel_y.inc(travel_y - self.last_y_travel)
+            self.last_y_travel = travel_y
+
+    def process_travel_z(self, travel_z):
+        """Process travel in Z direction"""
+        self.metrics.job_travel_z.set(travel_z)
+        if travel_z > self.last_z_travel:
+            self.metrics.printer_travel_z.inc(travel_z - self.last_z_travel)
+            self.last_z_travel = travel_z
+
+    def process_extrusion(self, extrusion):
+        """Process extrusion"""
+        if extrusion > self.last_extrusion_counter:
+            self.metrics.job_extrusion.inc(extrusion - self.last_extrusion_counter)
+            self.metrics.printer_extrusion.inc(extrusion - self.last_extrusion_counter)
+            self.last_extrusion_counter = extrusion
+
     def on_gcode_sent(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
         """GCode callback."""
         if phase == "sent":
             parse_result = self.parser.process_line(cmd)
             if parse_result == "movement":
-                if self.parser.extrusion_counter > self.last_extrusion_counter:
-                    # extrusion_total is monotonically increasing for the lifetime of the plugin
-                    self.metrics.job_extrusion.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
-                    self.metrics.printer_extrusion.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
-                    self.last_extrusion_counter = self.parser.extrusion_counter
-
-                # x_travel_print is modeled as a gauge so we can reset it after every print
-                self.metrics.job_travel_x.set(self.parser.x_travel)
-
-                if self.parser.x_travel > self.last_x_travel:
-                    # x_travel_total is monotonically increasing for the lifetime of the plugin
-                    self.metrics.printer_travel_x.inc(self.parser.x_travel - self.last_x_travel)
-                    self.last_x_travel = self.parser.x_travel
-
-                # y_travel_print is modeled as a gauge so we can reset it after every print
-                self.metrics.job_travel_y.set(self.parser.y_travel)
-
-                if self.parser.y_travel > self.last_y_travel:
-                    # y_travel_total is monotonically increasing for the lifetime of the plugin
-                    self.metrics.printer_travel_y.inc(self.parser.y_travel - self.last_y_travel)
-                    self.last_y_travel = self.parser.y_travel
-
-                # z_travel_print is modeled as a gauge so we can reset it after every print
-                self.metrics.job_travel_z.set(self.parser.z_travel)
-
-                if self.parser.z_travel > self.last_z_travel:
-                    # z_travel_total is monotonically increasing for the lifetime of the plugin
-                    self.metrics.printer_travel_z.inc(self.parser.z_travel - self.last_z_travel)
-                    self.last_z_travel = self.parser.z_travel
+                self.process_travel_x(self.parser.x_travel)
+                self.process_travel_y(self.parser.y_travel)
+                self.process_travel_z(self.parser.z_travel)
+                self.process_extrusion(self.parser.extrusion_counter)
             elif parse_result == "print_fan_speed":
                 v = getattr(self.parser, "print_fan_speed")
                 if v is not None:
