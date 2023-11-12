@@ -95,6 +95,21 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
             except Exception as err:
                 self._logger.warning(err)
 
+    def on_print_started(self):
+        """On print started actions."""
+        self.print_time_start = time.time()
+        self.metrics.jobs_started.inc()
+        # If there's a completion timer running, kill it.
+        if self.print_completion_timer:
+            self.print_completion_timer.cancel()
+            self.print_completion_timer = None
+        # reset the extrusion counter
+        self.parser.reset()
+        self.last_extrusion_counter = 0
+        self.last_x_travel = 0
+        self.last_y_travel = 0
+        self.last_z_travel = 0
+
     def on_event(self, event: str, payload: dict):
         """Event callback.
 
@@ -108,18 +123,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
             self.on_printer_offline(payload)
             self.metrics.printer_state.info(payload)
         if event == 'PrintStarted':
-            self.print_time_start = time.time()
-            self.metrics.jobs_started.inc()
-            # If there's a completion timer running, kill it.
-            if self.print_completion_timer:
-                self.print_completion_timer.cancel()
-                self.print_completion_timer = None
-            # reset the extrusion counter
-            self.parser.reset()
-            self.last_extrusion_counter = 0
-            self.last_x_travel = 0
-            self.last_y_travel = 0
-            self.last_z_travel = 0
+            self.on_print_started()
         if event == 'PrintFailed':
             self.metrics.jobs_failed.inc()
             self.on_job_complete()
