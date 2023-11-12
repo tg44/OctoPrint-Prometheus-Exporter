@@ -110,6 +110,11 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         self.last_y_travel = 0
         self.last_z_travel = 0
 
+    def on_state_changed(self):
+        """On printer state changed."""
+        self.on_printer_offline(payload)
+        self.metrics.printer_state.info(payload)
+
     def on_event(self, event: str, payload: dict):
         """Event callback.
 
@@ -120,8 +125,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         if event == 'ClientClosed':
             self.metrics.server_clients.dec()
         if event == 'PrinterStateChanged':
-            self.on_printer_offline(payload)
-            self.metrics.printer_state.info(payload)
+            self.on_state_changed()
         if event == 'PrintStarted':
             self.on_print_started()
         if event == 'PrintFailed':
