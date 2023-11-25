@@ -83,18 +83,6 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         self.print_completion_timer.start()
         Timer(30, lambda: self.print_deregister_callback(self.print_progress_label)).start()
 
-    def on_printer_offline(self, payload):
-        """Actions to perform if printer goes offline"""
-        if payload['state_id'] == 'OFFLINE':
-            self.on_job_complete_callback()
-            self.print_deregister_callback(self.print_progress_label)
-            #not really safe, totally not threadsafe, but I didn't found better alternative
-            try:
-                self.metrics.printer_temps_actual._metrics.clear()
-                self.metrics.printer_temps_target._metrics.clear()
-            except Exception as err:
-                self._logger.warning(err)
-
     def on_print_started(self):
         """On print started actions."""
         self.print_time_start = time.time()
@@ -110,9 +98,17 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         self.last_y_travel = 0
         self.last_z_travel = 0
 
-    def on_state_changed(self):
+    def on_state_changed(self, playload):
         """On printer state changed."""
-        self.on_printer_offline(payload)
+        if payload['state_id'] == 'OFFLINE':
+            self.on_job_complete_callback()
+            self.print_deregister_callback(self.print_progress_label)
+            #not really safe, totally not threadsafe, but I didn't found better alternative
+            try:
+                self.metrics.printer_temps_actual._metrics.clear()
+                self.metrics.printer_temps_target._metrics.clear()
+            except Exception as err:
+                self._logger.warning(err)
         self.metrics.printer_state.info(payload)
 
     def on_event(self, event: str, payload: dict):
@@ -125,7 +121,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         if event == 'ClientClosed':
             self.metrics.server_clients.dec()
         if event == 'PrinterStateChanged':
-            self.on_state_changed()
+            self.on_state_changed(payload)
         if event == 'PrintStarted':
             self.on_print_started()
         if event == 'PrintFailed':
