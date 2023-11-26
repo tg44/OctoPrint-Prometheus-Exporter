@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
-import sys
 
 # https://community.octoprint.org/t/how-to-determine-filament-extruded/7828
 
 # stolen directly from filaswitch
 class Gcode_parser(object):
+
 
     MOVE_RE = re.compile(r"^G0\s+|^G1\s+")
     X_COORD_RE = re.compile(r".*\s+X([-]*\d+\.*\d*)")

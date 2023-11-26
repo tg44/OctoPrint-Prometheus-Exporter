@@ -18,7 +18,7 @@ Currently Cookiecutter generates the following helpful extras to this folder:
 
 ### xyz_calibration_cube.gcode
 
-100 x 100 x 100mm callibration cube sliced with Cura 5.1.0 with a 0,4mm nozzle, 1,75mm filament on default *Normal 0,15mm* settings.
+100 x 100 x 100mm calibration cube sliced with Cura 5.1.0 with a 0,4mm nozzle, 1,75mm filament on default *Normal 0,15mm* settings.
 
 #### Distances
 * Total distance 2724,24m

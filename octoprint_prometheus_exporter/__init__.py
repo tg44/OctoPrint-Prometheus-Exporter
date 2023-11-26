@@ -101,7 +101,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         self.last_y_travel = 0
         self.last_z_travel = 0
 
-    def on_state_changed(self, playload):
+    def on_state_changed(self, payload):
         """On printer state changed."""
         if payload['state_id'] == 'OFFLINE':
             self.on_job_complete_callback()
@@ -170,7 +170,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
                     self.metrics.printer_fan_speed.set(v)
             if self.print_progress_label != '':
                 data = self._printer.get_current_data()
-                #self._logger.info(data)
+                # self._logger.info(data)
                 if data['progress']['printTime'] is not None:
                     self.metrics.job_time_elapsed.labels(self.print_progress_label).set(data['progress']['printTime'])
                 if data['progress']['printTimeLeft'] is not None:
@@ -185,7 +185,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         self.metrics.print_progress_label = path
         self.metrics.job_progress.labels(path).set(progress)
 
-    def	on_slicing_progress(self,
+    def on_slicing_progress(self,
                             slicer: str,
                             source_location: str,
                             source_path: str,
@@ -208,7 +208,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
         See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update for details.
         """
-        return {'prometheus_exporter':{
+        return {'prometheus_exporter' :{
             'displayName': 'Prometheus Exporter Plugin',
             'displayVersion': self._plugin_version,
             'type': 'github_release',
