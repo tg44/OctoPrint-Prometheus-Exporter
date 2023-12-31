@@ -10,6 +10,9 @@ dist
 docker/prometheus_data/*
 docker/grafana_data/*
 docker/octoprint_data/*
-venv2/*
-venv3/*
+
+# Environments
+venv2/
+venv3/
+venv/
 
