@@ -20,8 +20,8 @@ fi
 mkdir -p venv/octoprint
 
 OCTOPRINT_ARGS=(
-    "-c venv/octoprint/config.yml"
-    "-b venv/octoprint/"
+    -c venv/octoprint/config.yml
+    -b venv/octoprint/
 )
 
 # Configure octoprint for development
