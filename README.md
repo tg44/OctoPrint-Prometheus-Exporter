@@ -53,6 +53,11 @@ The metrics endpoint is: /plugin/prometheus_exporter/metrics. If your OctoPrint 
 
 * `octoprint_raspberry_core_temperature`: Gauge, core temperature of Raspberry Pi.
 
+You need to add the `pi` users to sudoers so it can execute the vcgencmd command without password. Create a file `/etc/sudoers.d/octoprint-vcgencmd` with
+```
+pi ALL=NOPASSWD: /usr/bin/vcgencmd
+```
+
 ## Setup
 
 Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wiki/Plugin:-Plugin-Manager)
