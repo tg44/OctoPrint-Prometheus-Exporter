@@ -1,7 +1,7 @@
 # OctoPrint-Prometheus-Exporter
 
 This is a utility plugin, which allows to scrape metrics from your OctoPrint instance using [Prometheus](https://prometheus.io/).
-Later on, you can use data vizualisation tools (for example [Grafana](https://grafana.com/)) to track and visualize your printer(s) status(es).
+Later on, you can use data visualization tools (for example [Grafana](https://grafana.com/)) to track and visualize your printer(s) status(es).
 
 This plugin has no visible UI!
 
@@ -97,14 +97,14 @@ New in version 0.2.0: by default all users / operators have access to the metric
 
 ### dev.sh
 
-Run `bash.dev` in this repository. This will
-* Create a Python virtual environment `venv/`
-* Install Octoprint `OctoPrint>=1.4.0`
-* Install this plugin
-* Configure Octoprint
-  * Create a user. `admin:admin`
-  * Skip all wizards
-  * Enable virtual printer and autoconnect
+Run `bash.dev` in this repository. This will:
+* Create a Python virtual environment `venv/`.
+* Install Octoprint `OctoPrint>=1.4.0`.
+* Install this plugin.
+* Configure Octoprint.
+  * Create a user `admin:admin`
+  * Skip all wizards.
+  * Enable virtual printer and connect automatically.
 * Start OctoPrint in debug mode.
 
 ### Docker

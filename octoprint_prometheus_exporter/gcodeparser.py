@@ -4,9 +4,9 @@ import re
 
 # https://community.octoprint.org/t/how-to-determine-filament-extruded/7828
 
-# stolen directly from filaswitch
-class Gcode_parser(object):
 
+class Gcode_parser(object):
+    """Stolen directly from filaswitch"""
 
     MOVE_RE = re.compile(r"^G0\s+|^G1\s+")
     X_COORD_RE = re.compile(r".*\s+X([-]*\d+\.*\d*)")

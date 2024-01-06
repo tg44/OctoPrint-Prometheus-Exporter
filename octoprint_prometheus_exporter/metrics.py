@@ -179,7 +179,7 @@ class Metrics:
             self._logger.error('Failed to execute "sudo /usr/bin/vcgencmd"')
             self._logger.error('Raspberry core temperature will not be reported')
             return None
-        temp = temp.replace('temp=' ,'').replace("'C", '')
+        temp = temp.replace('temp=', '').replace("'C", '')
         return float(temp)
 
     def job_complete(self):

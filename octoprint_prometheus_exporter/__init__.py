@@ -77,9 +77,8 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         self.metrics.jobs_time_total.inc(time.time() - self.print_time_start)
 
         # In 30 seconds, reset all the progress variables back to 0
-        # At a default 10 second interval, this gives us plenty of room for Prometheus to capture the 100%
-        # complete gauge.
-
+        # At a default 10 second interval, this gives us plenty of room for Prometheus to capture
+        # the 100% complete gauge.
         # TODO: Is this really a good idea?
 
         self.print_completion_timer = Timer(30, self.on_job_complete_callback)
@@ -106,7 +105,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         if payload['state_id'] == 'OFFLINE':
             self.on_job_complete_callback()
             self.print_deregister_callback(self.print_progress_label)
-            #not really safe, totally not threadsafe, but I didn't found better alternative
+            # not really safe, totally not threadsafe, but I didn't found better alternative
             try:
                 self.metrics.printer_temps_actual._metrics.clear()
                 self.metrics.printer_temps_target._metrics.clear()
@@ -208,7 +207,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
         See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update for details.
         """
-        return {'prometheus_exporter' :{
+        return {'prometheus_exporter': {
             'displayName': 'Prometheus Exporter Plugin',
             'displayVersion': self._plugin_version,
             'type': 'github_release',
