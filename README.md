@@ -93,7 +93,21 @@ Or if you have enabled authentication:
 
 New in version 0.2.0: by default all users / operators have access to the metrics endpoint. If you want to make metrics accessible to anonymous users (guests) without disabling your entire authentication system simply add the metrics permission to the guest user group.
 
-## Local developement/testing
+## Local development/testing
+
+### dev.sh
+
+Run `bash.dev` in this repository. This will
+* Create a Python virtual environment `venv/`
+* Install Octoprint `OctoPrint>=1.4.0`
+* Install this plugin
+* Configure Octoprint
+  * Create a user. `admin:admin`
+  * Skip all wizards
+  * Enable virtual printer and autoconnect
+* Start OctoPrint in debug mode.
+
+### Docker
 
 There is a docker-compose file, which will start:
  - an octoprint instance on port 5000

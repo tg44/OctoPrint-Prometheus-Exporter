@@ -148,7 +148,7 @@ class Metrics:
     def __init__(self, logger):
         self._logger = logger
         if self.get_raspberry_core_temperature() is not None:
-            self.raspberry_core_temp = Gauge(
+            self.self.raspberry_core_temp = Gauge(
                 'octoprint_raspberry_core_temperature',
                 'Core temperature of Raspberry Pi',
                 registry=self.registry)
