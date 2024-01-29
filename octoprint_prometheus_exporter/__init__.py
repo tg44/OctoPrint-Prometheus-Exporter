@@ -173,7 +173,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
-		self.metrics.print_progress_label = path
+		self.print_progress_label = path
 		self.metrics.print_progress.labels(path).set(progress)
 		pass
 	def	on_slicing_progress(self, slicer, source_location, source_path, destination_location, destination_path, progress):
