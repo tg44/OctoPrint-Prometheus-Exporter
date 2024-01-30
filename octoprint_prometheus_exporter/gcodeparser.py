@@ -19,6 +19,8 @@ class Gcode_parser(object):
 
     FAN_OFF_RE = re.compile("^M107")
 
+    COORDINATE_MODESWITCH_RE = re.compile("^(M82|M83|G90|G91)(?![0-9.])")
+
     def __init__(self):
         self.reset()
 
@@ -32,6 +34,8 @@ class Gcode_parser(object):
         self.z_travel = 0
         self.z = None
         self.e = None
+        self.absolute_e = True
+        self.absolute_moves = True
         self.speed = None
         self.print_fan_speed = None
 
@@ -95,6 +99,21 @@ class Gcode_parser(object):
 
         return None
 
+    def parse_coordinate_modeswitch(self, line):
+        m = self.COORDINATE_MODESWITCH_RE.match(line)
+
+        if not m:
+            return None
+
+        gcode = m.group(1)
+        absolute_e = gcode in ("M82", "G90")
+        absolute_moves = None
+
+        if gcode.startswith("G"):
+            absolute_moves = gcode == "G90"
+
+        return (absolute_e, absolute_moves)
+
     def process_axis_movement(self, target_position, current_position):
         return abs(current_position - target_position)
 
@@ -125,5 +144,15 @@ class Gcode_parser(object):
         if fanspeed is not None:
             self.print_fan_speed = fanspeed
             return "print_fan_speed"
+
+        coordinate_modes = self.parse_coordinate_modeswitch(line)
+        if coordinate_modes is not None:
+            (absolute_e, absolute_moves) = coordinate_modes
+
+            if absolute_e is not None:
+                self.absolute_e = absolute_e
+            if absolute_moves is not None:
+                self.absolute_moves = absolute_moves
+            return "coordinate_modeswitch"
 
         return None
