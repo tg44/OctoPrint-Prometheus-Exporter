@@ -114,30 +114,40 @@ class Gcode_parser(object):
 
         return (absolute_e, absolute_moves)
 
-    def process_axis_movement(self, target_position, current_position):
-        return abs(current_position - target_position)
+    def process_axis_movement(self, target_position, current_position, absolute):
+        if target_position is None:
+            return (0, current_position)
+
+        if absolute:
+            relative_movement = abs(current_position - target_position) if current_position is not None else None
+            new_position = target_position
+
+        else:
+            relative_movement = abs(target_position)
+            new_position = current_position + target_position if current_position is not None else None
+
+        return (relative_movement, new_position)
 
     def process_line(self, line):
         movement = self.parse_move_args(line)
         if movement is not None:
             (x, y, z, e, speed) = movement
-            if e is not None:
-                self.extrusion_counter += e
-                self.e = e
-            if x is not None:
-                if self.x is not None:
-                    self.x_travel += self.process_axis_movement(x, self.x)
-                self.x = x
-            if y is not None:
-                if self.y is not None:
-                    self.y_travel += self.process_axis_movement(y, self.y)
-                self.y = y
-            if z is not None:
-                if self.z is not None:
-                    self.z_travel += self.process_axis_movement(z, self.z)
-                self.z = z
+
+            (rel_e, new_e) = self.process_axis_movement(e, self.e, self.absolute_e)
+            (rel_x, new_x) = self.process_axis_movement(x, self.x, self.absolute_moves)
+            (rel_y, new_y) = self.process_axis_movement(y, self.y, self.absolute_moves)
+            (rel_z, new_z) = self.process_axis_movement(z, self.z, self.absolute_moves)
+
+            self.extrusion_counter += rel_e
+            self.x_travel += rel_x
+            self.y_travel += rel_y
+            self.z_travel += rel_z
+
+            (self.x, self.y, self.z, self.e) = (new_x, new_y, new_z, new_e)
+
             if speed is not None:
                 self.speed = speed
+
             return "movement"
 
         fanspeed = self.parse_fan_speed(line)
