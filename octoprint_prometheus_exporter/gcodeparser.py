@@ -19,6 +19,7 @@ class Gcode_parser(object):
     FAN_OFF_RE = re.compile("^M107")
 
     COORDINATE_MODESWITCH_RE = re.compile("^(M82|M83|G90|G91)(?![0-9.])")
+    COORDINATE_RESET_RE = re.compile("^G92\s+")
 
     def __init__(self):
         self.reset()
@@ -113,6 +114,32 @@ class Gcode_parser(object):
 
         return (absolute_e, absolute_moves)
 
+    def parse_coordinate_reset(self, line):
+        m = self.COORDINATE_RESET_RE.match(line)
+
+        if not m:
+            return None
+
+        (x, y, z, e) = (self.x, self.y, self.z, self.e)
+
+        m = self.X_COORD_RE.match(line)
+        if m:
+            x = float(m.groups()[0])
+
+        m = self.Y_COORD_RE.match(line)
+        if m:
+            y = float(m.groups()[0])
+
+        m = self.Z_COORD_RE.match(line)
+        if m:
+            z = float(m.groups()[0])
+
+        m = self.E_COORD_RE.match(line)
+        if m:
+            e = float(m.groups()[0])
+
+        return (x, y, z, e)
+
     def process_axis_movement(self, target_position, current_position, absolute):
         if target_position is None:
             return (0, current_position)
@@ -137,10 +164,10 @@ class Gcode_parser(object):
             (rel_y, new_y) = self.process_axis_movement(y, self.y, self.absolute_moves)
             (rel_z, new_z) = self.process_axis_movement(z, self.z, self.absolute_moves)
 
-            self.extrusion_counter += rel_e
-            self.x_travel += rel_x
-            self.y_travel += rel_y
-            self.z_travel += rel_z
+            self.extrusion_counter += rel_e or 0
+            self.x_travel += rel_x or 0
+            self.y_travel += rel_y or 0
+            self.z_travel += rel_z or 0
 
             (self.x, self.y, self.z, self.e) = (new_x, new_y, new_z, new_e)
 
@@ -163,5 +190,10 @@ class Gcode_parser(object):
             if absolute_moves is not None:
                 self.absolute_moves = absolute_moves
             return "coordinate_modeswitch"
+
+        coordinate_reset = self.parse_coordinate_reset(line)
+        if coordinate_reset is not None:
+            (self.x, self.y, self.z, self.e) = coordinate_reset
+            return "coordinate_reset"
 
         return None
