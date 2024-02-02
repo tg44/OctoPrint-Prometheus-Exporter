@@ -18,8 +18,8 @@ class Gcode_parser(object):
     FAN_SPEED_RE = re.compile(r".*\s+S(\d+\.*\d*)")
     FAN_OFF_RE = re.compile(r"^M107")
 
-    COORDINATE_MODESWITCH_RE = re.compile("^(M82|M83|G90|G91)(?![0-9.])")
-    COORDINATE_RESET_RE = re.compile("^G92\s+")
+    COORDINATE_MODESWITCH_RE = re.compile(r"^(M82|M83|G90|G91)(?![0-9.])")
+    COORDINATE_RESET_RE = re.compile(r"^G92\s+")
 
     def __init__(self):
         self.reset()
