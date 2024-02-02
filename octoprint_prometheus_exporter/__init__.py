@@ -52,7 +52,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
         })
 
     def on_job_complete_callback(self):
-        """Printjob complete callback"""
+        """Print job complete callback"""
         self.metrics.job_complete()
         self.print_completion_timer = None
 
@@ -71,9 +71,12 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
     def on_job_complete(self, event):
         """Actions to perform on job complete event"""
-        self.metrics.jobs_failed.inc() if event == 'PrintFailed' else None
-        self.metrics.jobs_done.inc() if event == 'PrintDone' else None
-        self.metrics.jobs_cancelled.inc() if event == 'PrintCancelled' else None
+        if event == 'PrintFailed':
+            self.metrics.jobs_failed.inc()
+        if event == 'PrintDone':
+            self.metrics.jobs_done.inc()
+        if event == 'PrintCancelled':
+            self.metrics.jobs_cancelled.inc()
         self.metrics.jobs_time_total.inc(time.time() - self.print_time_start)
 
         # In 30 seconds, reset all the progress variables back to 0
@@ -118,11 +121,16 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
         Called by the EventHandlerPlugin.
         """
-        self.metrics.server_clients.inc() if event == 'ClientOpened' else None
-        self.metrics.server_clients.dec() if event == 'ClientClosed' else None
-        self.on_state_changed(payload) if event == 'PrinterStateChanged' else None
-        self.on_print_started() if event == 'PrintStarted' else None
-        self.metrics.server_timelapses.inc() if event == 'CaptureDone' else None
+        if event == 'ClientOpened':
+            self.metrics.server_clients.inc()
+        if event == 'ClientClosed':
+            self.metrics.server_clients.dec()
+        if event == 'PrinterStateChanged':
+            self.on_state_changed(payload)
+        if event == 'PrintStarted':
+            self.on_print_started()
+        if event == 'CaptureDone':
+            self.metrics.server_timelapses.inc()
         if event in ['PrintFailed', 'PrintDone', 'PrintCancelled']:
             self.on_job_complete(event)
 
