@@ -1,31 +1,32 @@
+"""GCODE parser for OctoPrint Prometheus Exporter."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
 
 # https://community.octoprint.org/t/how-to-determine-filament-extruded/7828
 
-# stolen directly from filaswitch
+
 class Gcode_parser(object):
-    MOVE_RE = re.compile("^G0\s+|^G1\s+")
-    X_COORD_RE = re.compile(".*\s+X([-]*\d+\.*\d*)")
-    Y_COORD_RE = re.compile(".*\s+Y([-]*\d+\.*\d*)")
-    E_COORD_RE = re.compile(".*\s+E([-]*\d+\.*\d*)")
-    Z_COORD_RE = re.compile(".*\s+Z([-]*\d+\.*\d*)")
-    SPEED_VAL_RE = re.compile(".*\s+F(\d+\.*\d*)")
+    """Stolen directly from filaswitch"""
 
-    FAN_SET_RE = re.compile("^M106\s+")
-    FAN_SPEED_RE = re.compile(".*\s+S(\d+\.*\d*)")
+    MOVE_RE = re.compile(r"^G0\s+|^G1\s+")
+    X_COORD_RE = re.compile(r".*\s+X([-]*\d+\.*\d*)")
+    Y_COORD_RE = re.compile(r".*\s+Y([-]*\d+\.*\d*)")
+    E_COORD_RE = re.compile(r".*\s+E([-]*\d+\.*\d*)")
+    Z_COORD_RE = re.compile(r".*\s+Z([-]*\d+\.*\d*)")
+    SPEED_VAL_RE = re.compile(r".*\s+F(\d+\.*\d*)")
+    FAN_SET_RE = re.compile(r"^M106\s+")
+    FAN_SPEED_RE = re.compile(r".*\s+S(\d+\.*\d*)")
+    FAN_OFF_RE = re.compile(r"^M107")
 
-    FAN_OFF_RE = re.compile("^M107")
-
-    COORDINATE_MODESWITCH_RE = re.compile("^(M82|M83|G90|G91)(?![0-9.])")
-    COORDINATE_RESET_RE = re.compile("^G92\s+")
+    COORDINATE_MODESWITCH_RE = re.compile(r"^(M82|M83|G90|G91)(?![0-9.])")
+    COORDINATE_RESET_RE = re.compile(r"^G92\s+")
 
     def __init__(self):
         self.reset()
 
     def reset(self):
-        self.last_extrusion_move = None
+        """Reset internal state."""
         self.extrusion_counter = 0
         self.x_travel = 0
         self.x = None
@@ -39,51 +40,33 @@ class Gcode_parser(object):
         self.speed = None
         self.print_fan_speed = None
 
-    def is_extrusion_move(self, m):
-        """ args are a tuple (x,y,z,e,speed)
-        """
-        if m and (m[0] is not None or m[1] is not None) and m[3] is not None and m[3] != 0:
-            return True
-        else:
-            return False
-
     def parse_move_args(self, line):
-        """ returns a tuple (x,y,z,e,speed) or None
-        """
+        """Parse a movement command and return the new coordinates and speed."""
 
-        m = self.MOVE_RE.match(line)
-        if m:
-            x = None
-            y = None
-            z = None
-            e = None
-            speed = None
+        parsed = self.MOVE_RE.match(line)
 
-            m = self.X_COORD_RE.match(line)
-            if m:
-                x = float(m.groups()[0])
+        if parsed is None:
+            return None
 
-            m = self.Y_COORD_RE.match(line)
-            if m:
-                y = float(m.groups()[0])
+        parsed = self.X_COORD_RE.match(line)
+        x_target = float(parsed.groups()[0]) if parsed else None
 
-            m = self.Z_COORD_RE.match(line)
-            if m:
-                z = float(m.groups()[0])
+        parsed = self.Y_COORD_RE.match(line)
+        y_target = float(parsed.groups()[0]) if parsed else None
 
-            m = self.E_COORD_RE.match(line)
-            if m:
-                e = float(m.groups()[0])
+        parsed = self.Z_COORD_RE.match(line)
+        z_target = float(parsed.groups()[0]) if parsed else None
 
-            m = self.SPEED_VAL_RE.match(line)
-            if m:
-                speed = float(m.groups()[0])
+        parsed = self.E_COORD_RE.match(line)
+        e_target = float(parsed.groups()[0]) if parsed else None
 
-            return x, y, z, e, speed
+        parsed = self.SPEED_VAL_RE.match(line)
+        speed = float(parsed.groups()[0]) if parsed else None
 
-        return None
+        return x_target, y_target, z_target, e_target, speed
 
     def parse_fan_speed(self, line):
+        """Parse a fan speed command and return the new speed."""
         m = self.FAN_SET_RE.match(line)
         if m:
             m = self.FAN_SPEED_RE.match(line)
@@ -100,6 +83,7 @@ class Gcode_parser(object):
         return None
 
     def parse_coordinate_modeswitch(self, line):
+        """Parse a coordinate mode switch command and return the new modes."""
         m = self.COORDINATE_MODESWITCH_RE.match(line)
 
         if not m:
@@ -115,6 +99,7 @@ class Gcode_parser(object):
         return (absolute_e, absolute_moves)
 
     def parse_coordinate_reset(self, line):
+        """Parse a G92 command and return the new coordinates or None."""
         m = self.COORDINATE_RESET_RE.match(line)
 
         if not m:
@@ -141,6 +126,7 @@ class Gcode_parser(object):
         return (x, y, z, e)
 
     def process_axis_movement(self, target_position, current_position, absolute):
+        """Process a movement on a single axis and return the relative movement and the new position."""
         if target_position is None:
             return (0, current_position)
 
@@ -155,6 +141,7 @@ class Gcode_parser(object):
         return (relative_movement, new_position)
 
     def process_line(self, line):
+        """Process a GCODE line and update the internal state accordingly."""
         movement = self.parse_move_args(line)
         if movement is not None:
             (x, y, z, e, speed) = movement
@@ -177,7 +164,7 @@ class Gcode_parser(object):
             return "movement"
 
         fanspeed = self.parse_fan_speed(line)
-        if fanspeed is not None:
+        if fanspeed:
             self.print_fan_speed = fanspeed
             return "print_fan_speed"
 

@@ -1,37 +1,62 @@
 # OctoPrint-Prometheus-Exporter
 
-This is a utility plugin, which enables the [prometheus server](https://prometheus.io/) to scrape metrics from your octoprint instance.
-Later on, you can use data vizualisation tools (for example [grafana](https://grafana.com/)) to track and visualize your printer(s) status(es).
+This is a utility plugin, which allows to scrape metrics from your OctoPrint instance using [Prometheus](https://prometheus.io/).
+Later on, you can use data visualization tools (for example [Grafana](https://grafana.com/)) to track and visualize your printer(s) status(es).
 
 This plugin has no visible UI!
 
-Currently exported metrics:
-  - python version - as info
-  - octoprint version, hostname, os - as info
-  - actual temperature - as gauge with tool identifier label
-  - target temperature - as gauge with tool identifier label
-  - client number - as gauge; the actually connected clients to the host
-  - printer state - as info
-  - started prints - as counter
-  - failed prints - as counter
-  - done prints - as counter
-  - cancelled prints - as counter
-  - timelaps count - as counter
-  - print progress - as gauge with path label
-  - slice progress - as gauge with path label
-  - print total time - as counter
-  - last print time - as gauge
-  - fan speed - as gauge
-  - extrusion total - as counter
-  - x, y and z travel - as a counter
-  - last print extrusion - as gauge
-  - print time elapsed - as gauge
-  - print time estimate - as gauge
-  - print time left estimation - as gauge
+## Metrics
 
-All of the metrics are prefixed as `octoprint_` for easier identification.
+All metrics are prefixed as `octoprint_` for easier identification. Metrics for distance and temperature are showed in the units configured in the 3D printer firmware.
 
-The metrics endpoint is: http://localhost:5000/plugin/prometheus_exporter/metrics (change the host+port to your actual host+port)
+The metrics endpoint is: /plugin/prometheus_exporter/metrics. If your OctoPrint runs on localhost:5000 this leads to http://localhost:5000/plugin/prometheus_exporter/metrics as scrape target.
+
+### Server
+
+* `octoprint_server_timelapses`: Counter, captured timelapses.
+* `octoprint_server_slice_progress`: Gauge, slicing progress.
+* `octoprint_server_clients`: Gauge, connected clients.
+* `octoprint_server_info`: Info, server information.
+  * Contains labels `app_start`, `host`, `octoprint_version`, `platform`
+
+### Jobs
+
+* `octoprint_jobs_time_seconds`: Counter, combined printing time in seconds.
+* `octoprint_jobs_started`: Counter, amount of started prints.
+* `octoprint_jobs_failed`: Counter, amount of failed prints.
+* `octoprint_jobs_done`: Counter, amount of finished prints.
+* `octoprint_jobs_cancelled`: Counter, amount of cancelled prints.
+
+### Printer
+
+* `octoprint_printer_travel_x`: Gauge, printer travel on X axis.
+* `octoprint_printer_travel_y`: Gauge, printer travel on Y axis.
+* `octoprint_printer_travel_z`: Gauge, printer travel on Z axis.
+* `octoprint_printer_extrusion`: Gauge, printer filament extrusion.
+* `octoprint_printer_state`: Gauge, printer connection info.
+* `octoprint_printer_fan_speed`: Gauge, fan speed.
+* `octoprint_printer_temperatures_actual`: Gauge, reported temperatures.
+* `octoprint_printer_temperatures_target`: Gauge, targeted temperatures.
+
+### Job
+
+* `octoprint_job_travel_x`: Gauge, print job travel on X axis.
+* `octoprint_job_travel_y`: Gauge, print job travel on Y axis.
+* `octoprint_job_travel_z`: Gauge, print job travel on Z axis.
+* `octoprint_job_progress`: Gauge, print job progress.
+* `octoprint_job_extrusion`: Gauge, print job filament extrusion.
+* `octoprint_job_time_elapsed_seconds`: Gauge, print job time elapsed in seconds.
+* `octoprint_job_time_est_seconds`: Gauge, print job time estimate in seconds.
+* `octoprint_job_time_left_estimate_seconds`: Gauge, print job time left estimate in seconds.
+
+### RaspberryPi
+
+* `octoprint_raspberry_core_temperature`: Gauge, core temperature of Raspberry Pi.
+
+You need to add the `pi` users to sudoers so it can execute the vcgencmd command without password. Create a file `/etc/sudoers.d/octoprint-vcgencmd` with
+```
+pi ALL=NOPASSWD: /usr/bin/vcgencmd
+```
 
 ## Setup
 
@@ -72,14 +97,14 @@ New in version 0.2.0: by default all users / operators have access to the metric
 
 ### dev.sh
 
-Run `bash.dev` in this repository. This will
-* Create a Python virtual environment `venv/`
-* Install Octoprint `OctoPrint>=1.4.0`
-* Install this plugin
-* Configure Octoprint
-  * Create a user. `admin:admin`
-  * Skip all wizards
-  * Enable virtual printer and autoconnect
+Run `bash.dev` in this repository. This will:
+* Create a Python virtual environment `venv/`.
+* Install Octoprint `OctoPrint>=1.4.0`.
+* Install this plugin.
+* Configure Octoprint.
+  * Create a user `admin:admin`
+  * Skip all wizards.
+  * Enable virtual printer and connect automatically.
 * Start OctoPrint in debug mode.
 
 ### Docker
