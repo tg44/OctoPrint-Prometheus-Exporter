@@ -29,9 +29,9 @@ class Gcode_parser(object):
         """Reset internal state."""
         self.extrusion_counter = 0
         self.x_travel = 0
-        self.x_pos = None
+        self.x = None
         self.y_travel = 0
-        self.y_pos = None
+        self.y = None
         self.z_travel = 0
         self.z = None
         self.e = None
