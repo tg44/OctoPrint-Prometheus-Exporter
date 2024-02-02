@@ -18,6 +18,9 @@ class Gcode_parser(object):
     FAN_SPEED_RE = re.compile(r".*\s+S(\d+\.*\d*)")
     FAN_OFF_RE = re.compile(r"^M107")
 
+    COORDINATE_MODESWITCH_RE = re.compile("^(M82|M83|G90|G91)(?![0-9.])")
+    COORDINATE_RESET_RE = re.compile("^G92\s+")
+
     def __init__(self):
         self.reset()
 
@@ -28,7 +31,10 @@ class Gcode_parser(object):
         self.y_travel = 0
         self.y_pos = None
         self.z_travel = 0
-        self.z_pos = None
+        self.z = None
+        self.e = None
+        self.absolute_e = True
+        self.absolute_moves = True
         self.speed = None
         self.print_fan_speed = None
 
@@ -59,33 +65,116 @@ class Gcode_parser(object):
         return x_target, y_target, z_target, e_target, speed
 
     def parse_fan_speed(self, line):
-        if self.FAN_SET_RE.match(line):
-            parsed = self.FAN_SPEED_RE.match(line)
-            return float(parsed.groups()[0]) if parsed else 255.0
-        return 0.0 if self.FAN_OFF_RE.match(line) else None
+        m = self.FAN_SET_RE.match(line)
+        if m:
+            m = self.FAN_SPEED_RE.match(line)
+            if m:
+                speed = float(m.groups()[0])
+            else:
+                speed = 255.0
+            return speed
+
+        m = self.FAN_OFF_RE.match(line)
+        if m:
+            return 0.0
+
+        return None
+
+    def parse_coordinate_modeswitch(self, line):
+        m = self.COORDINATE_MODESWITCH_RE.match(line)
+
+        if not m:
+            return None
+
+        gcode = m.group(1)
+        absolute_e = gcode in ("M82", "G90")
+        absolute_moves = None
+
+        if gcode.startswith("G"):
+            absolute_moves = gcode == "G90"
+
+        return (absolute_e, absolute_moves)
+
+    def parse_coordinate_reset(self, line):
+        m = self.COORDINATE_RESET_RE.match(line)
+
+        if not m:
+            return None
+
+        (x, y, z, e) = (self.x, self.y, self.z, self.e)
+
+        m = self.X_COORD_RE.match(line)
+        if m:
+            x = float(m.groups()[0])
+
+        m = self.Y_COORD_RE.match(line)
+        if m:
+            y = float(m.groups()[0])
+
+        m = self.Z_COORD_RE.match(line)
+        if m:
+            z = float(m.groups()[0])
+
+        m = self.E_COORD_RE.match(line)
+        if m:
+            e = float(m.groups()[0])
+
+        return (x, y, z, e)
+
+    def process_axis_movement(self, target_position, current_position, absolute):
+        if target_position is None:
+            return (0, current_position)
+
+        if absolute:
+            relative_movement = abs(current_position - target_position) if current_position is not None else None
+            new_position = target_position
+
+        else:
+            relative_movement = abs(target_position)
+            new_position = current_position + target_position if current_position is not None else None
+
+        return (relative_movement, new_position)
 
     def process_line(self, line):
         movement = self.parse_move_args(line)
-        if movement:
-            x_target, y_target, z_target, e_target, speed = movement
-            if e_target:
-                self.extrusion_counter += e_target
-            if x_target:
-                self.x_travel += abs(self.x_pos - x_target) if self.x_pos else 0
-                self.x_pos = x_target
-            if y_target:
-                self.y_travel += abs(self.y_pos - y_target) if self.y_pos else 0
-                self.y_pos = y_target
-            if z_target:
-                self.z_travel += abs(self.z_pos - z_target) if self.z_pos else 0
-                self.z_pos = z_target
-            if speed:
+        if movement is not None:
+            (x, y, z, e, speed) = movement
+
+            (rel_e, new_e) = self.process_axis_movement(e, self.e, self.absolute_e)
+            (rel_x, new_x) = self.process_axis_movement(x, self.x, self.absolute_moves)
+            (rel_y, new_y) = self.process_axis_movement(y, self.y, self.absolute_moves)
+            (rel_z, new_z) = self.process_axis_movement(z, self.z, self.absolute_moves)
+
+            self.extrusion_counter += rel_e or 0
+            self.x_travel += rel_x or 0
+            self.y_travel += rel_y or 0
+            self.z_travel += rel_z or 0
+
+            (self.x, self.y, self.z, self.e) = (new_x, new_y, new_z, new_e)
+
+            if speed is not None:
                 self.speed = speed
+
             return "movement"
 
         fanspeed = self.parse_fan_speed(line)
         if fanspeed:
             self.print_fan_speed = fanspeed
             return "print_fan_speed"
+
+        coordinate_modes = self.parse_coordinate_modeswitch(line)
+        if coordinate_modes is not None:
+            (absolute_e, absolute_moves) = coordinate_modes
+
+            if absolute_e is not None:
+                self.absolute_e = absolute_e
+            if absolute_moves is not None:
+                self.absolute_moves = absolute_moves
+            return "coordinate_modeswitch"
+
+        coordinate_reset = self.parse_coordinate_reset(line)
+        if coordinate_reset is not None:
+            (self.x, self.y, self.z, self.e) = coordinate_reset
+            return "coordinate_reset"
 
         return None

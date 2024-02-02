@@ -181,7 +181,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
     def on_print_progress(self, storage: str, path: str, progress: int):
         """Print progress callback"""
-        self.metrics.print_progress_label = path
+        self.print_progress_label = path
         self.metrics.job_progress.labels(path).set(progress)
 
     def on_slicing_progress(self,
