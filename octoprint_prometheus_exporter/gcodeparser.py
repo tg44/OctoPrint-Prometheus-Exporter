@@ -1,3 +1,4 @@
+"""GCODE parser for OctoPrint Prometheus Exporter."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
@@ -25,6 +26,7 @@ class Gcode_parser(object):
         self.reset()
 
     def reset(self):
+        """Reset internal state."""
         self.extrusion_counter = 0
         self.x_travel = 0
         self.x_pos = None
@@ -39,8 +41,7 @@ class Gcode_parser(object):
         self.print_fan_speed = None
 
     def parse_move_args(self, line):
-        """ returns a tuple (x,y,z,e,speed) or None
-        """
+        """Parse a movement command and return the new coordinates and speed."""
 
         parsed = self.MOVE_RE.match(line)
 
@@ -65,6 +66,7 @@ class Gcode_parser(object):
         return x_target, y_target, z_target, e_target, speed
 
     def parse_fan_speed(self, line):
+        """Parse a fan speed command and return the new speed."""
         m = self.FAN_SET_RE.match(line)
         if m:
             m = self.FAN_SPEED_RE.match(line)
@@ -81,6 +83,7 @@ class Gcode_parser(object):
         return None
 
     def parse_coordinate_modeswitch(self, line):
+        """Parse a coordinate mode switch command and return the new modes."""
         m = self.COORDINATE_MODESWITCH_RE.match(line)
 
         if not m:
@@ -96,6 +99,7 @@ class Gcode_parser(object):
         return (absolute_e, absolute_moves)
 
     def parse_coordinate_reset(self, line):
+        """Parse a G92 command and return the new coordinates or None."""
         m = self.COORDINATE_RESET_RE.match(line)
 
         if not m:
@@ -122,6 +126,7 @@ class Gcode_parser(object):
         return (x, y, z, e)
 
     def process_axis_movement(self, target_position, current_position, absolute):
+        """Process a movement on a single axis and return the relative movement and the new position."""
         if target_position is None:
             return (0, current_position)
 
@@ -136,6 +141,7 @@ class Gcode_parser(object):
         return (relative_movement, new_position)
 
     def process_line(self, line):
+        """Process a GCODE line and update the internal state accordingly."""
         movement = self.parse_move_args(line)
         if movement is not None:
             (x, y, z, e, speed) = movement
