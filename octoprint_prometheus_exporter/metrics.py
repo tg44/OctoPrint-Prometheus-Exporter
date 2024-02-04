@@ -82,5 +82,11 @@ class Metrics:
     z_travel_total = Counter('octoprint_z_travel_total', 'Z axis travel total', registry=registry)
     z_travel_print = Gauge('octoprint_z_travel_print', 'Z axis travel in this print', registry=registry)
 
+    # coordinates
+    current_x = Gauge('octoprint_current_x', 'Current X coordinate', registry=registry)
+    current_y = Gauge('octoprint_current_y', 'Current Y coordinate', registry=registry)
+    current_z = Gauge('octoprint_current_z', 'Current Z coordinate', registry=registry)
+    current_e = Gauge('octoprint_current_e', 'Current E coordinate', registry=registry)
+
     def render(self):
         return make_wsgi_app(registry=self.registry)

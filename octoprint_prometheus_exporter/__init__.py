@@ -131,9 +131,11 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 					self.metrics.extrusion_print.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
 					self.metrics.extrusion_total.inc(self.parser.extrusion_counter - self.last_extrusion_counter)
 					self.last_extrusion_counter = self.parser.extrusion_counter
+				self.metrics.current_e.set(self.parser.e)
 
 				# x_travel_print is modeled as a gauge so we can reset it after every print
 				self.metrics.x_travel_print.set(self.parser.x_travel)
+				self.metrics.current_x.set(self.parser.x)
 
 				if self.parser.x_travel > self.last_x_travel:
 					# x_travel_total is monotonically increasing for the lifetime of the plugin
@@ -142,6 +144,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 				# y_travel_print is modeled as a gauge so we can reset it after every print
 				self.metrics.y_travel_print.set(self.parser.y_travel)
+				self.metrics.current_y.set(self.parser.y)
 
 				if self.parser.y_travel > self.last_y_travel:
 					# y_travel_total is monotonically increasing for the lifetime of the plugin
@@ -150,6 +153,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 				# z_travel_print is modeled as a gauge so we can reset it after every print
 				self.metrics.z_travel_print.set(self.parser.z_travel)
+				self.metrics.current_z.set(self.parser.z)
 
 				if self.parser.z_travel > self.last_z_travel:
 					# z_travel_total is monotonically increasing for the lifetime of the plugin
