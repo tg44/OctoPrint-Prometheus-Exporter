@@ -53,11 +53,13 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 		self.print_completion_timer = None
 
 	def print_deregister_callback(self, label):
-		if label != '':
-			self.metrics.print_progress.remove(label)
-			self.metrics.print_time_elapsed.remove(label)
-			self.metrics.print_time_est.remove(label)
-			self.metrics.print_time_left_est.remove(label)
+		if label == '':
+			return
+
+		self.metrics.print_progress.remove(label)
+		self.metrics.print_time_elapsed.remove(label)
+		self.metrics.print_time_est.remove(label)
+		self.metrics.print_time_left_est.remove(label)
 		self.print_progress_label = ''
 
 	def slice_deregister_callback(self, label):
@@ -74,7 +76,11 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 		self.print_completion_timer = Timer(30, self.print_complete_callback)
 		self.print_completion_timer.start()
-		Timer(30, lambda: self.print_deregister_callback(self.print_progress_label)).start()
+
+		# capture the current print_progress_label in the timer object and immediately clear it to avoid reintroducing
+		# the label onto the print time metrics when gcode is sent during print_deregister_callback's execution
+		Timer(30, self.print_deregister_callback, self.print_progress_label).start()
+		self.print_progress_label = ''
 
 	def deactivateMetricsIfOffline(self, payload):
 		if payload['state_id'] == 'OFFLINE':
@@ -208,7 +214,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 				pip="https://github.com/tg44/OctoPrint-Prometheus-Exporter/archive/{target_version}.zip"
 			)
 		)
-	
+
 	def is_blueprint_protected(self):
 		# Disable global protection, use permission system.
 		return False
