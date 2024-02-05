@@ -159,6 +159,11 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 					# z_travel_total is monotonically increasing for the lifetime of the plugin
 					self.metrics.z_travel_total.inc(self.parser.z_travel - self.last_z_travel)
 					self.last_z_travel = self.parser.z_travel
+			elif parse_result == "coordinate_reset":
+				self.metrics.current_x.set(self.parser.x)
+				self.metrics.current_y.set(self.parser.y)
+				self.metrics.current_z.set(self.parser.z)
+				self.metrics.current_e.set(self.parser.e)
 			elif parse_result == "print_fan_speed":
 				v = getattr(self.parser, "print_fan_speed")
 				if v is not None:
@@ -212,7 +217,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 				pip="https://github.com/tg44/OctoPrint-Prometheus-Exporter/archive/{target_version}.zip"
 			)
 		)
-	
+
 	def is_blueprint_protected(self):
 		# Disable global protection, use permission system.
 		return False
