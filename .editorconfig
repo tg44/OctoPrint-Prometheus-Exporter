@@ -17,6 +17,10 @@ indent_style = tab
 indent_style = space
 indent_size = 4
 
+[*/metrics.py]
+indent_style = space
+indent_size = 4
+
 [**.js]
 indent_style = space
 indent_size = 4
