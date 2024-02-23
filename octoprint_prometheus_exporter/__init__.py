@@ -79,7 +79,7 @@ class PrometheusExporterPlugin(octoprint.plugin.BlueprintPlugin,
 
 		# capture the current print_progress_label in the timer object and immediately clear it to avoid reintroducing
 		# the label onto the print time metrics when gcode is sent during print_deregister_callback's execution
-		Timer(30, self.print_deregister_callback, self.print_progress_label).start()
+		Timer(30, self.print_deregister_callback, [self.print_progress_label]).start()
 		self.print_progress_label = ''
 
 	def deactivateMetricsIfOffline(self, payload):
