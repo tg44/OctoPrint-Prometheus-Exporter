@@ -356,98 +356,183 @@
       "type": "gauge"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "cacheTimeout": null,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DATASOURCE}",
-      "fill": 1,
-      "fillGradient": 0,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": 3600000,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "CANCELLING": {
+                  "color": "orange",
+                  "index": 14,
+                  "text": "Cancelling"
+                },
+                "CLOSED": {
+                  "color": "super-light-red",
+                  "index": 10,
+                  "text": "Closed"
+                },
+                "CLOSED_WITH_ERROR": {
+                  "color": "dark-red",
+                  "index": 12,
+                  "text": "Closed with Error"
+                },
+                "CONNECTING": {
+                  "color": "dark-yellow",
+                  "index": 2,
+                  "text": "Connecting"
+                },
+                "DETECT_SERIAL": {
+                  "color": "yellow",
+                  "index": 1,
+                  "text": "Detect Serial"
+                },
+                "ERROR": {
+                  "color": "red",
+                  "index": 11,
+                  "text": "Error"
+                },
+                "FINISHING": {
+                  "color": "dark-green",
+                  "index": 9,
+                  "text": "Finishing"
+                },
+                "OPEN_SERIAL": {
+                  "color": "super-light-yellow",
+                  "index": 0,
+                  "text": "Open Serial"
+                },
+                "OPERATIONAL": {
+                  "color": "blue",
+                  "index": 3,
+                  "text": "Operational"
+                },
+                "PAUSED": {
+                  "color": "purple",
+                  "index": 6,
+                  "text": "Paused"
+                },
+                "PAUSING": {
+                  "color": "super-light-purple",
+                  "index": 7,
+                  "text": "Pausing"
+                },
+                "PRINTING": {
+                  "color": "green",
+                  "index": 5,
+                  "text": "Printing"
+                },
+                "RESUMING": {
+                  "color": "light-green",
+                  "index": 8,
+                  "text": "Resuming"
+                },
+                "STARTING": {
+                  "color": "super-light-green",
+                  "index": 4,
+                  "text": "Starting"
+                },
+                "TRANSFERING_FILE": {
+                  "color": "super-light-blue",
+                  "index": 13,
+                  "text": "Transfering File"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 6,
-        "w": 11,
-        "x": 13,
+        "w": 10,
+        "x": 14,
         "y": 0
       },
-      "hiddenSeries": false,
-      "id": 10,
-      "legend": {
-        "alignAsTable": true,
-        "avg": false,
-        "current": false,
-        "hideEmpty": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
+      "id": 12,
       "options": {
-        "dataLinks": []
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "6.5.0-beta1",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "11.0.0",
       "targets": [
         {
-          "expr": "octoprint_printer_state_info",
-          "format": "heatmap",
-          "legendFormat": "{{state_id}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DATASOURCE}"
+          },
+          "editorMode": "builder",
+          "expr": "octoprint_printer_state_info{}",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
           "refId": "A"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "State",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
+      "title": "Printer State",
+      "transformations": [
         {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "instance",
+            "rowField": "Time",
+            "valueField": "state_id"
+          }
         },
         {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "time",
+                "targetField": "Time\\instance"
+              }
+            ],
+            "fields": {}
+          }
         }
       ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "state-timeline"
     },
     {
       "aliasColors": {},
